@@ -1105,14 +1105,14 @@ function render3D(){
    pg.rotation.y=Math.atan2(P.tg.x-P.x,P.tg.y-P.y);
  }
  if(P.eq.wg)pg.userData.parts.root.rotation.y=Math.sin(T*2)*.03;
- animateActor3(pg,moving,P.mvg?.08:0);
+ animateActor3(pg,moving,P.mvg ? .08 : 0);
  const live=new Set(['p']);
  for(const m of M){
   if(m.dead)continue;
   live.add(m);
   const kind=m.boss?3:m.t;
   let g=ACT3.get(m);
-  if(!g)g=makeActor3(m,m.boss?0xa92b2b,m.boss,kind);
+  if(!g)g=makeActor3(m,m.boss ? 0xa92b2b : 0x6b4f3a,m.boss,kind);
   g.position.set(m.x,0,m.y);
   if(m.agg)g.rotation.y=Math.atan2(P.x-m.x,P.y-m.y);
   else if(Math.hypot(m.x-m.hx,m.y-m.hy)>3)g.rotation.y=Math.atan2(m.x-m.hx,m.y-m.hy);
