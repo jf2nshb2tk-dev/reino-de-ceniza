@@ -804,10 +804,10 @@ function box3(x,z,w,h,d,c,ry=0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h
 function cyl3(x,z,r,h,c,seg=8){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r*.92,h,seg),mat3(c));m.position.set(x,h/2,z);m.castShadow=true;m.receiveShadow=true;GR3.add(m);return m}
 function cone3(x,z,r,h,c,seg=6){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),mat3(c));m.position.set(x,h/2,z);m.castShadow=true;GR3.add(m);return m}
 function init3D(){
- const cv=document.getElementById('c3d');R3=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R3.setPixelRatio(Math.min(devicePixelRatio,1.5));R3.setSize(innerWidth,innerHeight,false);R3.shadowMap.enabled=true;R3.shadowMap.type=THREE.PCFSoftShadowMap;R3.outputColorSpace=THREE.SRGBColorSpace;
- SC3=new THREE.Scene();SC3.background=new THREE.Color(0x080706);SC3.fog=new THREE.Fog(0x080706,900,3600);
- CA3=new THREE.OrthographicCamera(-innerWidth/2,innerWidth/2,innerHeight/2,-innerHeight/2,.1,10000);
- GR3=new THREE.Group();SC3.add(GR3);SC3.add(new THREE.HemisphereLight(0xb9c7dd,0x24170e,1.65));
+ const cv=document.getElementById('c3d');cv.style.background='#101820';R3=new THREE.WebGLRenderer({canvas:cv,antialias:false,alpha:false,preserveDrawingBuffer:false});R3.setPixelRatio(Math.min(devicePixelRatio,1.5));R3.setSize(innerWidth,innerHeight,false);R3.shadowMap.enabled=false;R3.outputColorSpace=THREE.SRGBColorSpace;
+ SC3=new THREE.Scene();SC3.background=new THREE.Color(0x101820);SC3.fog=new THREE.Fog(0x101820,1400,7000);
+ CA3=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,12000);
+ GR3=new THREE.Group();SC3.add(GR3);SC3.add(new THREE.HemisphereLight(0xb9c7dd,0x24170e,1.8));
  const sun=new THREE.DirectionalLight(0xffe5b0,2.1);sun.position.set(-900,1500,-700);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-1800;sun.shadow.camera.right=1800;sun.shadow.camera.top=1800;sun.shadow.camera.bottom=-1800;SC3.add(sun);
  buildTerrain3();buildCity3();buildDecor3();ready3=true;
 }
@@ -856,8 +856,9 @@ function render3D(){
  CA3.left=-vw/2;CA3.right=vw/2;CA3.top=vh/2;CA3.bottom=-vh/2;
  GR3.scale.setScalar(1);
  const target=new THREE.Vector3(P.x,0,P.y);
- const cp=new THREE.Vector3(P.x+850,1150,P.y+850);
- CA3.position.lerp(cp,.12);CA3.lookAt(target);
+ const cp=new THREE.Vector3(P.x+900,1050,P.y+900);
+ CA3.position.lerp(cp,.18);CA3.lookAt(target);
+ CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix();
  let pg=ACT3.get('p');if(!pg)pg=makeActor3('p',0xd4a84b);
  pg.position.set(P.x,0,P.y);pg.rotation.y=-(P.a||0);
  const live=new Set(['p']);
