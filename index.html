@@ -1044,7 +1044,7 @@ function makeActor3(id,color,boss=false,kind='mob'){
   }
   const eyes=[];
   for(const sx of [-3,3]){const e=new THREE.Mesh(new THREE.SphereGeometry(boss?2.6:1.9,8,6),mat3(t===2?0xffd84a:0xff4a3d,.3,.2));e.position.set(sx,hh+rr*2+7,-(boss?11:8));root.add(e);eyes.push(e)}
-  const nm=boss?(BN[m.b]||'Jefe'):(MN[t]||'Enemigo');
+  const nm=boss?(BN[id.b]||'Jefe'):(MN[t]||'Enemigo');
   const label=makeLabel3(nm,'',boss?'#ff6b6b':'#f0d9ad');label.position.y=(boss?105:82);g.add(label);
   g.userData.parts={legs,arms:[],root,label,eyes};
  }
