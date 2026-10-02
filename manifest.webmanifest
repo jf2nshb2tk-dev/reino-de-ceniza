@@ -1,0 +1,9 @@
+{
+  "name": "Reino de Ceniza",
+  "short_name": "Reino de Ceniza",
+  "start_url": "./",
+  "display": "fullscreen",
+  "background_color": "#080605",
+  "theme_color": "#080605",
+  "orientation": "landscape"
+}
