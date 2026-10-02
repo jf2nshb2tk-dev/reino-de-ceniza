@@ -849,10 +849,25 @@ function buildDecor3(){
 }
 function makeActor3(id,color,boss=false){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(boss?18:10,boss?32:20,4,8),mat3(color)),head=new THREE.Mesh(new THREE.SphereGeometry(boss?14:8,8,6),mat3(0xd2b08b));body.position.y=boss?34:20;head.position.y=boss?68:43;body.castShadow=head.castShadow=true;g.add(body,head);GR3.add(g);ACT3.set(id,g);return g}
 function render3D(){
- if(!ready3||!P)return;const scale=Math.min(innerWidth/1200,innerHeight/700)*.62;GR3.scale.setScalar(scale);
- const target=new THREE.Vector3(P.x,0,P.y),cp=new THREE.Vector3(target.x+850,target.y+1150,target.z+850);CA3.position.lerp(cp,.1);CA3.lookAt(target);
- let pg=ACT3.get('p');if(!pg)pg=makeActor3('p',0xd4a84b);pg.position.set(P.x,0,P.y);pg.rotation.y=-(P.a||0);
- const live=new Set(['p']);for(const m of M){if(m.dead)continue;live.add(m);let g=ACT3.get(m);if(!g)g=makeActor3(m,m.boss?0x9b2020:0x6b4b35,m.boss);g.position.set(m.x,0,m.y);g.scale.setScalar(m.boss?1.35:1)}
+ if(!ready3||!P||!R3)return;
+ const view=Math.max(1,Math.min(innerWidth,innerHeight));
+ const zoom=Math.max(.42,Math.min(1.15,view/900));
+ const vw=innerWidth/zoom,vh=innerHeight/zoom;
+ CA3.left=-vw/2;CA3.right=vw/2;CA3.top=vh/2;CA3.bottom=-vh/2;
+ GR3.scale.setScalar(1);
+ const target=new THREE.Vector3(P.x,0,P.y);
+ const cp=new THREE.Vector3(P.x+850,1150,P.y+850);
+ CA3.position.lerp(cp,.12);CA3.lookAt(target);
+ let pg=ACT3.get('p');if(!pg)pg=makeActor3('p',0xd4a84b);
+ pg.position.set(P.x,0,P.y);pg.rotation.y=-(P.a||0);
+ const live=new Set(['p']);
+ for(const m of M){
+  if(m.dead)continue;
+  live.add(m);
+  let g=ACT3.get(m);
+  if(!g)g=makeActor3(m,m.boss?0x9b2020:0x6b4b35,m.boss);
+  g.position.set(m.x,0,m.y);g.scale.setScalar(m.boss?1.35:1);
+ }
  for(const [k,g] of ACT3)g.visible=live.has(k);
  R3.render(SC3,CA3);
 }
