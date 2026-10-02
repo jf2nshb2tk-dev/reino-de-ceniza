@@ -257,11 +257,14 @@ function snd(t){const S={hit:['square',220,80,.12,.06],crit:['sawtooth',440,120,
 const zone=()=>{const d=Math.hypot(P.x-HX,P.y-HY);return d<650?0:1+bi(P.x,P.y)},SC=[[0,3,7,10],[0,2,7,9],[0,1,5,8],[0,3,6,10],[0,1,6,7]];let mi=0;
 setInterval(()=>{if(!P||!SND||!AC)return;const z=zone(),f=[220,262,196,175,147][z]*Math.pow(2,(SC[z][mi++%4]+(mi%9==0?12:0))/12);tone('triangle',f,f,1.2,.025)},700);
 let CRT=null,DEL=null;
-function lobby(){const db=ldb();$('#crt').style.display='none';$('#cards').style.display='flex';$('#selp').textContent='Elige tu personaje o crea uno nuevo';let h='';
- for(let i=0;i<6;i++){const c=db.chars[i];
-  if(c){const k=CL[c.cls];h+=DEL==c.id?`<div class=card><div>🗑️</div><b>¿Borrar a ${esc(c.name)}?</b><p class=sm>No se puede deshacer</p><button data-l="x${c.id}">Sí, borrar</button> <button data-l=n>No</button></div>`:`<div class="card ch"><div>${k.i}</div><b>${esc(c.name)}</b><p class=sm>${k.n} · Nv ${c.lv||1}${c.res?' · Resets '+c.res:''}<br>🪙 ${c.zen||0}</p><button data-l="p${c.id}">Jugar</button> <button data-l="d${c.id}" title="Borrar personaje">🗑️</button></div>`}
+function lobby(){try{const db=ldb(),cards=$('#cards'),crtEl=$('#crt'),selp=$('#selp');if(crtEl)crtEl.style.display='none';if(cards)cards.style.display='flex';if(selp)selp.textContent='Elige tu personaje o crea uno nuevo';let h='';
+ const chars=db&&Array.isArray(db.chars)?db.chars:[];
+ for(let i=0;i<6;i++){const ch=chars[i];
+  if(ch){const k=CL[ch.cls]||CL.war,name=esc(ch.name||k.n||'Héroe'),id=esc(ch.id||'');
+   h+=DEL==ch.id?`<div class=card><div>🗑️</div><b>¿Borrar a ${name}?</b><p class=sm>No se puede deshacer</p><button data-l="x${id}">Sí, borrar</button> <button data-l=n>No</button></div>`:`<div class="card ch"><div>${k.i||'⚔️'}</div><b>${name}</b><p class=sm>${k.n||'Guerrero'} · Nv ${ch.lv||1}${ch.res?' · Resets '+ch.res:''}<br>🪙 ${ch.zen||0}</p><button data-l="p${id}">Jugar</button> <button data-l="d${id}" title="Borrar personaje">🗑️</button></div>`}
   else h+=`<button class=card data-l=c style="opacity:.85"><div>➕</div><b>Nuevo personaje</b></button>`}
- $('#cards').innerHTML=h}
+ if(cards)cards.innerHTML=h;
+ }catch(err){console.error('Lobby recovery:',err);const cards=$('#cards'),selp=$('#selp');if(selp)selp.textContent='Selecciona una opción';if(cards){cards.style.display='flex';cards.innerHTML='<button class="card" data-l="c"><div>➕</div><b>Nuevo personaje</b><p class="sm">Iniciar partida</p></button>'}}}
 function crt(){$('#cards').style.display='none';const c=$('#crt');c.style.display='flex';$('#selp').textContent='Crea tu personaje';
  c.innerHTML=`<input id=nm2 maxlength=14 placeholder="Nombre del personaje" autocomplete=off><div class=cc>${Object.keys(CL).map(k=>`<button class="card${k==CRT.cls?' sel':''}" data-c="${k}"><div>${CL[k].i}</div><b>${CL[k].n}</b><p class=sm>${CL[k].d}</p></button>`).join('')}</div><div><button data-l=ok>Crear y jugar</button> <button data-l=back>Volver</button></div>`}
 $('#sel').onclick=e=>{const b=e.target.closest('[data-l],[data-c]');if(!b)return;
