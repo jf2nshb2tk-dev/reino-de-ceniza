@@ -847,7 +847,7 @@ function buildDecor3(){
   else{cyl3(x,z,7+rnd()*7,28,0x392724,7);cone3(x,z,24+rnd()*18,30+rnd()*20,0x7d3f2e,6)}
  }
 }
-function makeActor3(id,color,boss=false){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(boss?18:10,boss?32:20,4,8),mat3(color)),head=new THREE.Mesh(new THREE.SphereGeometry(boss?14:8,8,6),mat3(0xd2b08b));body.position.y=boss?34:20;head.position.y=boss?68:43;body.castShadow=head.castShadow=true;g.add(body,head);GR3.add(g);ACT3.set(id,g);return g}
+function makeActor3(id,color,boss=false){const g=new THREE.Group(),r=boss?18:10,h=boss?42:26,body=new THREE.Mesh(new THREE.CylinderGeometry(r,r*.88,h,8),mat3(color)),head=new THREE.Mesh(new THREE.SphereGeometry(boss?14:8,8,6),mat3(0xd2b08b));body.position.y=h/2+2;head.position.y=h+14;body.castShadow=head.castShadow=true;g.add(body,head);GR3.add(g);ACT3.set(id,g);return g}
 function render3D(){
  if(!ready3||!P||!R3)return;
  const view=Math.max(1,Math.min(innerWidth,innerHeight));
