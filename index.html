@@ -206,9 +206,12 @@ body.touch #lg{top:calc(126px + env(safe-area-inset-top,0px))}
 <div id="mu"><div class="orb hp"><i id="hp"></i><b id="hpt"></b></div><div id="mc"><div id="hb" style="display:none"><button id="k1">1<br>Golpe</button><button id="k2">2<br>Torbellino</button><button id="k3">3<br>Sanar</button><button id="k4">4<br>Salto</button><button id="k5">5<br>Furia</button><button id="kh">Q<br>🧪</button><button id="km">W<br>💧</button></div><div class="bar xb"><i id="xp"></i><span id="xpt"></span></div></div><div class="orb mp"><i id="mp"></i><b id="mpt"></b></div></div>
 <canvas id="mm" width="110" height="110"></canvas><div id="bb" style="display:none"></div><div id="lg"></div><div id="js"><div id="jk"></div></div><button id="ba">⚔️</button><button id="bg" title="Recoger objetos (R)">🤲<br><small>Recoger</small></button><div id="wins"></div><div id="tip"></div><button id="np" style="display:none"></button>
 <div id="sel"><h1>REINO DE CENIZA</h1><p class="sm" id="selp"></p><div id="cards"></div><div id="crt" style="display:none"></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.min.js"></script>
-<script src="https://unpkg.com/three@0.180.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js"></script>
+<script>
+if(typeof THREE==='undefined'){
+  document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"><\\/script>');
+}
+</script>
 <script>
 const $=s=>document.querySelector(s),C=$('#c'),X=C.getContext('2d');
 const IS_T=matchMedia('(pointer:coarse)').matches,GLOWK=IS_T?0:.7;
