@@ -528,7 +528,7 @@ function mkOV(){const cw=Math.round(WW/2),ch=Math.round(WH/2);OVc=document.creat
 function draw(){X.fillStyle='#0a0806';X.fillRect(0,0,W,H);if(!P)return;
  X.save();X.scale(Z,Z);X.translate(-cam.x,-cam.y);if(DN){X.fillStyle='#0c0a10';X.fillRect(0,0,WW,WH)}else{if(!OVc)mkOV();X.drawImage(OVc,0,0,WW,WH);X.strokeStyle='#4a3b1f';X.lineWidth=8;X.strokeRect(0,0,WW,WH);}X.textAlign='center';X.textBaseline='middle';if(DN)arena();else town();pdr(portal(),DN?'Salir (toca / E)':'Mazmorra (toca / E)',DN?'#3498db':'#8e6cf0');
 X.fillStyle='#0a0806';X.fillRect(0,0,W,H);if(!P)return;
- X.save();X.scale(Z,Z);X.translate(-cam.x,-cam.y);if(DN){X.fillStyle='#0c0a10';X.fillRect(0,0,WW,WH)}else{X.fillStyle=GP;X.fillRect(cam.x,cam.y,W/Z+2,H/Z+2);if(!OVc)mkOV();X.drawImage(OVc,0,0,WW,WH);X.strokeStyle='#4a3b1f';X.lineWidth=8;X.strokeRect(0,0,WW,WH);}X.textAlign='center';X.textBaseline='middle';if(DN)arena();else town();pdr(portal(),DN?'Salir (toca / E)':'Mazmorra (toca / E)',DN?'#3498db':'#8e6cf0');
+ X.save();X.scale(Z,Z);X.translate(-cam.x,-cam.y);if(DN){X.fillStyle='#0c0a10';X.fillRect(0,0,WW,WH)}else{if(!OVc)mkOV();X.drawImage(OVc,0,0,WW,WH);X.strokeStyle='#4a3b1f';X.lineWidth=8;X.strokeRect(0,0,WW,WH);}X.textAlign='center';X.textBaseline='middle';if(DN)arena();else town();pdr(portal(),DN?'Salir (toca / E)':'Mazmorra (toca / E)',DN?'#3498db':'#8e6cf0');
  const vis=o=>o.x>cam.x-60&&o.x<cam.x+W/Z+60&&o.y>cam.y-60&&o.y<cam.y+H/Z+60;
  for(const d of D)if(vis(d))ddraw(d);
  const L=[];if(!DN)for(const o of DEC)if(vis(o))L.push([o.y,()=>dec(o)]);
