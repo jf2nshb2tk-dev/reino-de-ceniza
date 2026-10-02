@@ -411,7 +411,7 @@ function die(){snd('die');if(DN)exitDn();P.zen=Math.floor(P.zen*.95);P.x=HX;P.y=
 function auto(s){const c=P.cls;if(P.hp<s.hp*.6&&c!='war')sk(5);if(c=='war'&&P.tg&&(P.tg.boss||P.tg.hp>s.dmg*15))sk(5);if(P.hp<s.hp*.4)pot('h');if(P.mp<s.mp*.2)pot('m');
  if(!P.tg&&!P.dp){let b=null,bd=380;for(const d of D){const k=dist(P,d);if(k<bd){b=d;bd=k}}if(b)P.dp=b;else{bd=1e9;for(const m of M){if(m.dead||(m.lv>P.lv+6&&!DN))continue;const k=dist(P,m);if(k<bd){b=m;bd=k}}if(b)P.tg=b}}
  if(P.tg){const n=M.filter(m=>!m.dead&&dist(m,P)<140).length;if(n>=3){sk(c=='elf'?2:3);if(c=='war')sk(2)}if(P.mp>25)sk(c=='war'?4:c=='mage'?2:3);if(P.mp>20)sk(1)}}
-function upd(dt){const s=stats(),safe=dist(P,{x:HX,y:HY})<340;P.mvg=0;P.k3-=dt;P.k4-=dt;P.k5-=dt;P.bf-=dt;P.sht-=dt;P.ls-=dt;P.hs-=dt;P.rg-=dt;P.iv-=dt;if(P.rg>0)P.hp=Math.min(s.hp,P.hp+s.hp*.04*dt);P.cd-=dt;P.k1-=dt;P.k2-=dt;
+function upd(dt){const s=stats(),safe=dist(P,{x:HX,y:HY})<500;P.mvg=0;P.k3-=dt;P.k4-=dt;P.k5-=dt;P.bf-=dt;P.sht-=dt;P.ls-=dt;P.hs-=dt;P.rg-=dt;P.iv-=dt;if(P.rg>0)P.hp=Math.min(s.hp,P.hp+s.hp*.04*dt);P.cd-=dt;P.k1-=dt;P.k2-=dt;
  P.hp=Math.min(s.hp,P.hp+(safe?s.hp*.08:s.hp*(.004+.003*mt('D3')))*dt);P.mp=Math.min(s.mp,P.mp+(safe?s.mp*.1:s.mp*.01)*dt);
  if(helper)auto(s);
  const joy=JS.a&&Math.hypot(JS.dx,JS.dy)>.15;
