@@ -818,7 +818,7 @@ function init3D(){
  R3.setClearColor(0x203040,1);
  SC3=new THREE.Scene();
  SC3.background=new THREE.Color(0x203040);
- CA3=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,.1,12000);
+ CA3=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,.1,12000);
  GR3=new THREE.Group();
  SC3.add(GR3);
  SC3.add(new THREE.AmbientLight(0xffffff,3.2));
@@ -828,7 +828,7 @@ function init3D(){
  const test=new THREE.Mesh(new THREE.BoxGeometry(220,120,220),new THREE.MeshBasicMaterial({color:0xffcc33}));
  test.position.set(HX,60,HY);
  SC3.add(test);
- CA3.position.set(HX+650,650,HY+650);
+ CA3.position.set(HX+360,420,HY+360);
  CA3.lookAt(HX,0,HY);
  CA3.updateProjectionMatrix();
  R3.render(SC3,CA3);
@@ -878,7 +878,7 @@ function makeActor3(id,color,boss=false){const g=new THREE.Group(),r=boss?18:10,
 function render3D(){
  if(!ready3||!P||!R3)return;
  const target=new THREE.Vector3(P.x,0,P.y);
- const cp=new THREE.Vector3(P.x+520,620,P.y+520);
+ const cp=new THREE.Vector3(P.x+300,380,P.y+300);
  CA3.position.lerp(cp,.22);CA3.lookAt(target);
  CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix();
  let pg=ACT3.get('p');if(!pg)pg=makeActor3('p',0xd4a84b);
