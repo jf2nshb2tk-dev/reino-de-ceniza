@@ -465,82 +465,113 @@ function dec(o){const x=o.x,y=o.y,e=o.e;X.fillStyle='#0005';X.beginPath();X.elli
  else if(e=='🌿'){X.fillStyle='#2f8a3c';for(let i=-1;i<2;i++){X.beginPath();X.ellipse(x+i*7,y+3-Math.abs(i)*2,5,10,i*.5,0,7);X.fill()}}
  else{X.fillStyle='#e8dcc0';X.fillRect(x-1.5,y,3,8);X.fillStyle='#c0392b';X.beginPath();X.arc(x,y,6,Math.PI,0);X.fill();X.fillStyle='#fff';X.fillRect(x-3,y-4,2,2)}}
 function town(){
- const R=520, PZ=285;
- // Base de la ciudad: anillo, caminos y plaza para darle escala y profundidad.
- X.fillStyle='#302a22';X.beginPath();X.arc(HX,HY,R,0,7);X.fill();
- X.strokeStyle='#74613f';X.lineWidth=12;X.stroke();
- X.fillStyle='#514735';X.beginPath();X.arc(HX,HY,390,0,7);X.fill();
- X.strokeStyle='#8b7650';X.lineWidth=3;X.beginPath();X.arc(HX,HY,390,0,7);X.stroke();
+ const R=520;
+ // Plataforma de la ciudad: piedra, borde y sombra para que no parezca pintada sobre el mapa.
+ X.fillStyle='#17130f';X.beginPath();X.ellipse(HX,HY+18,R+18,R*.86,0,0,7);X.fill();
+ X.fillStyle='#373027';X.beginPath();X.arc(HX,HY,R,0,7);X.fill();
+ X.strokeStyle='#827052';X.lineWidth=18;X.stroke();
+ X.strokeStyle='#b09a70';X.lineWidth=4;X.stroke();
 
- // Caminos principales desde la plaza hacia los cuatro biomas.
+ // Empedrado irregular de toda la ciudad.
+ for(let ring=95;ring<500;ring+=48){
+   const n=Math.max(10,Math.floor(ring*.075));
+   for(let i=0;i<n;i++){
+     const q=i*Math.PI*2/n+(ring%96)*.01;
+     const px=HX+Math.cos(q)*ring,py=HY+Math.sin(q)*ring*.84;
+     X.fillStyle=i%3===0?'#70624b':(i%2?'#5d5140':'#806f53');
+     X.fillRect(px-7,py-3,14,6);
+   }
+ }
+ // Caminos principales, con bordes y bloques de piedra.
  const path=(ang,len,w)=>{
-   const x1=HX+Math.cos(ang)*70,y1=HY+Math.sin(ang)*70,x2=HX+Math.cos(ang)*len,y2=HY+Math.sin(ang)*len;
-   X.strokeStyle='#211b15';X.lineWidth=w+18;X.lineCap='round';X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
-   X.strokeStyle='#8d7550';X.lineWidth=w;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
-   X.strokeStyle='#b49a6b';X.lineWidth=4;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   const x1=HX+Math.cos(ang)*55,y1=HY+Math.sin(ang)*55,x2=HX+Math.cos(ang)*len,y2=HY+Math.sin(ang)*len;
+   X.strokeStyle='#17130f';X.lineWidth=w+24;X.lineCap='round';X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.strokeStyle='#5d4d39';X.lineWidth=w+8;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.strokeStyle='#917951';X.lineWidth=w;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.strokeStyle='#b49b6b';X.lineWidth=3;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.lineWidth=1;for(let d=90;d<len;d+=55){const px=HX+Math.cos(ang)*d,py=HY+Math.sin(ang)*d;X.fillStyle='#6c5a42';X.fillRect(px-8,py-2,16,4)}
  };
- path(-Math.PI/2,500,62);path(0,500,62);path(Math.PI/2,500,62);path(Math.PI,500,62);
+ path(-Math.PI/2,500,64);path(0,500,64);path(Math.PI/2,500,64);path(Math.PI,500,64);
 
- // Plaza central empedrada.
- const pg=X.createRadialGradient(HX,HY,20,HX,HY,185);pg.addColorStop(0,'#7a6b54');pg.addColorStop(1,'#4a4031');
- X.fillStyle=pg;X.beginPath();X.arc(HX,HY,185,0,7);X.fill();
- X.strokeStyle='#a18c66';X.lineWidth=5;X.beginPath();X.arc(HX,HY,185,0,7);X.stroke();
- for(let i=0;i<18;i++){const q=i*Math.PI*2/18;X.fillStyle='#9b8865';X.beginPath();X.arc(HX+Math.cos(q)*145,HY+Math.sin(q)*145,3,0,7);X.fill()}
+ // Plaza central de losas.
+ X.fillStyle='#302920';X.beginPath();X.arc(HX,HY,194,0,7);X.fill();
+ X.fillStyle='#75654d';X.beginPath();X.arc(HX,HY,184,0,7);X.fill();
+ X.strokeStyle='#b09a70';X.lineWidth=4;X.beginPath();X.arc(HX,HY,184,0,7);X.stroke();
+ for(let i=0;i<28;i++){const q=i*Math.PI*2/28,r=70+(i%3)*34,px=HX+Math.cos(q)*r,py=HY+Math.sin(q)*r*.82;X.strokeStyle='#514532';X.lineWidth=2;X.beginPath();X.moveTo(px-10,py);X.lineTo(px+10,py+((i%2)*3-1));X.stroke()}
 
- // Fuente/estatua central con volumen.
- X.fillStyle='#0005';X.beginPath();X.ellipse(HX,HY+78,72,20,0,0,7);X.fill();
- X.fillStyle='#6b6255';X.beginPath();X.ellipse(HX,HY+48,62,20,0,0,7);X.fill();
- X.fillStyle='#918776';X.fillRect(HX-48,HY-8,96,56);
- X.fillStyle='#b4aa96';X.fillRect(HX-34,HY-30,68,24);
- X.fillStyle='#6ec6df';X.beginPath();X.ellipse(HX,HY-6,38,11,0,0,7);X.fill();
- X.fillStyle='#d7f6ff';X.beginPath();X.arc(HX,HY-55,18,0,7);X.fill();
+ // Fuente con varios niveles y sombra real.
+ X.fillStyle='#0007';X.beginPath();X.ellipse(HX,HY+86,86,24,0,0,7);X.fill();
+ X.fillStyle='#4b4339';X.beginPath();X.ellipse(HX,HY+55,70,21,0,0,7);X.fill();
+ X.fillStyle='#8f8370';X.fillRect(HX-54,HY+5,108,50);
+ X.fillStyle='#b4a68e';X.fillRect(HX-40,HY-24,80,30);
+ X.fillStyle='#6ec6df';X.beginPath();X.ellipse(HX,HY-1,42,13,0,0,7);X.fill();
+ X.fillStyle='#d9f7ff';X.beginPath();X.arc(HX,HY-55,19,0,7);X.fill();
+ X.strokeStyle='#d9f7ff';X.lineWidth=3;X.beginPath();X.moveTo(HX,HY-38);X.lineTo(HX-10,HY-12);X.moveTo(HX,HY-38);X.lineTo(HX+10,HY-12);X.stroke();
 
- // Faroles y árboles de plaza.
+ // Faroles.
  for(const [dx,dy] of [[-235,-20],[235,-20],[-210,185],[210,185]]){
-   X.fillStyle='#0005';X.beginPath();X.ellipse(HX+dx,HY+dy+12,13,5,0,0,7);X.fill();
-   X.fillStyle='#4b3520';X.fillRect(HX+dx-3,HY+dy-22,6,34);
+   X.fillStyle='#0006';X.beginPath();X.ellipse(HX+dx,HY+dy+14,18,6,0,0,7);X.fill();
+   X.fillStyle='#3b291c';X.fillRect(HX+dx-4,HY+dy-25,8,40);
+   X.fillStyle='#1d1712';X.fillRect(HX+dx-11,HY+dy-31,22,8);
    X.fillStyle='#f7d76a';X.beginPath();X.arc(HX+dx,HY+dy-27,7,0,7);X.fill();
+   X.fillStyle='#fff0a0';X.beginPath();X.arc(HX+dx-2,HY+dy-29,2,0,7);X.fill();
  }
 
- // Casas grandes con paredes, zócalo, techo, puerta, ventanas y sombra.
+ // Casas con volumen: zócalo, tres planos de pared, aleros, techo por capas y detalles.
  const house=(dx,dy,w,h,roof)=>{
-   const bx=HX+dx,by=HY+dy,sh=h*.72;
-   X.fillStyle='#0007';X.beginPath();X.ellipse(bx,by+18,w*.62,18,0,0,7);X.fill();
-   // cimientos
-   X.fillStyle='#29241e';X.fillRect(bx-w/2-8,by-h+4,w+16,sh);
-   X.fillStyle='#8f7657';X.fillRect(bx-w/2,by-h,w,sh);
-   X.fillStyle='#a98c66';X.fillRect(bx-w/2+8,by-h+8,w-16,sh-8);
-   // techo con volumen
-   X.fillStyle='#321f1b';X.beginPath();X.moveTo(bx-w/2-18,by-h);X.lineTo(bx,by-h-82);X.lineTo(bx+w/2+18,by-h);X.lineTo(bx+w/2+8,by-h+12);X.lineTo(bx,by-h-62);X.lineTo(bx-w/2-8,by-h+12);X.closePath();X.fill();
-   X.fillStyle=roof;X.beginPath();X.moveTo(bx-w/2-12,by-h-5);X.lineTo(bx,by-h-72);X.lineTo(bx+w/2+12,by-h-5);X.lineTo(bx,by-h+13);X.closePath();X.fill();
+   const bx=HX+dx,by=HY+dy,sh=h*.78;
+   X.fillStyle='#0008';X.beginPath();X.ellipse(bx,by+20,w*.67,21,0,0,7);X.fill();
+   X.fillStyle='#29231d';X.fillRect(bx-w/2-12,by-h+5,w+24,sh+9);
+   X.fillStyle='#705d46';X.fillRect(bx-w/2,by-h,w,sh);
+   X.fillStyle='#9a815e';X.fillRect(bx-w/2+9,by-h+8,w-18,sh-8);
+   X.fillStyle='#b39a72';X.fillRect(bx-w/2+13,by-h+13,w-26,5);
+   // ladrillos / tablas
+   X.strokeStyle='#765f45';X.lineWidth=2;
+   for(let yy=by-h+30;yy<by-4;yy+=25){X.beginPath();X.moveTo(bx-w/2+8,yy);X.lineTo(bx+w/2-8,yy);X.stroke()}
+   // alero oscuro
+   X.fillStyle='#251b17';X.fillRect(bx-w/2-14,by-h+sh-4,w+28,12);
+   // techo trasero y frente
+   X.fillStyle='#241817';X.beginPath();X.moveTo(bx-w/2-24,by-h+4);X.lineTo(bx,by-h-91);X.lineTo(bx+w/2+24,by-h+4);X.lineTo(bx+w/2+12,by-h+18);X.lineTo(bx,by-h-67);X.lineTo(bx-w/2-12,by-h+18);X.closePath();X.fill();
+   X.fillStyle=roof;X.beginPath();X.moveTo(bx-w/2-17,by-h+1);X.lineTo(bx,by-h-78);X.lineTo(bx+w/2+17,by-h+1);X.lineTo(bx,by-h+17);X.closePath();X.fill();
+   X.strokeStyle='#d0aa63';X.lineWidth=3;X.beginPath();X.moveTo(bx-w/2-17,by-h+1);X.lineTo(bx,by-h-78);X.lineTo(bx+w/2+17,by-h+1);X.stroke();
    // puerta
-   X.fillStyle='#3b2618';X.fillRect(bx-15,by-48,30,48);X.fillStyle='#d7a83e';X.beginPath();X.arc(bx+7,by-25,3,0,7);X.fill();
-   // ventanas
-   for(const sx of [-w*.27,w*.27]){X.fillStyle='#283d4b';X.fillRect(bx+sx-13,by-h*.52,26,24);X.fillStyle='#e7c76a';X.fillRect(bx+sx-2,by-h*.52,4,24);X.fillRect(bx+sx-13,by-h*.52+10,26,4)}
-   // chimenea
-   X.fillStyle='#604738';X.fillRect(bx+w*.24,by-h-28,18,40);X.fillStyle='#3b2924';X.fillRect(bx+w*.21,by-h-31,24,6);
+   X.fillStyle='#2e2018';X.fillRect(bx-18,by-52,36,52);X.fillStyle='#5b3823';X.fillRect(bx-13,by-47,26,47);X.fillStyle='#d7a83e';X.beginPath();X.arc(bx+8,by-27,3,0,7);X.fill();
+   // ventanas con marco
+   for(const sx of [-w*.27,w*.27]){
+     X.fillStyle='#34271e';X.fillRect(bx+sx-16,by-h*.52-3,32,30);
+     X.fillStyle='#31556a';X.fillRect(bx+sx-12,by-h*.52,24,22);
+     X.fillStyle='#d4b66d';X.fillRect(bx+sx-2,by-h*.52,4,22);X.fillRect(bx+sx-12,by-h*.52+9,24,4)
+   }
+   // chimenea y humo
+   X.fillStyle='#4b3428';X.fillRect(bx+w*.22,by-h-28,20,42);X.fillStyle='#2b211d';X.fillRect(bx+w*.19,by-h-32,26,7);
+   X.fillStyle='#75695c';for(let j=0;j<3;j++){X.globalAlpha=.18;X.beginPath();X.arc(bx+w*.32+j*8,by-h-48-j*13,7+j*3,0,7);X.fill()}X.globalAlpha=1;
  };
- house(-285,-95,180,120,'#a33d35');
- house(285,-95,180,120,'#456a8f');
- house(-270,245,170,112,'#6b4d83');
- house(270,245,170,112,'#4d7b5b');
+ house(-285,-95,180,120,'#9d3932');
+ house(285,-95,180,120,'#3f668e');
+ house(-270,245,170,112,'#684978');
+ house(270,245,170,112,'#4c795b');
 
- // Edificio principal tipo castillo, más alto para que la ciudad tenga un punto focal.
+ // Castillo central: base escalonada + torres + tejados, con profundidad isométrica.
  const cx=HX,cy=HY-205;
- X.fillStyle='#0007';X.beginPath();X.ellipse(cx,cy+98,125,28,0,0,7);X.fill();
- X.fillStyle='#4a4035';X.fillRect(cx-105,cy-20,210,115);
- X.fillStyle='#665b4c';X.fillRect(cx-92,cy-8,184,103);
- for(const sx of [-78,78]){X.fillStyle='#3d362d';X.fillRect(cx+sx-28,cy-70,56,165);X.fillStyle='#746756';X.fillRect(cx+sx-21,cy-61,42,156)}
- X.fillStyle='#8e7a58';X.beginPath();X.moveTo(cx-118,cy-20);X.lineTo(cx-78,cy-92);X.lineTo(cx-38,cy-20);X.closePath();X.fill();
- X.fillStyle='#8e7a58';X.beginPath();X.moveTo(cx+38,cy-20);X.lineTo(cx+78,cy-92);X.lineTo(cx+118,cy-20);X.closePath();X.fill();
- X.fillStyle='#3b2924';X.beginPath();X.moveTo(cx-110,cy-70);X.lineTo(cx-78,cy-120);X.lineTo(cx-46,cy-70);X.closePath();X.fill();
- X.fillStyle='#3b2924';X.beginPath();X.moveTo(cx+46,cy-70);X.lineTo(cx+78,cy-120);X.lineTo(cx+110,cy-70);X.closePath();X.fill();
- X.fillStyle='#bda46e';X.fillRect(cx-22,cy+28,44,67);X.fillStyle='#2b2520';X.beginPath();X.arc(cx,cy+28,22,Math.PI,0);X.fill();
- X.fillStyle='#74c9e8';X.fillRect(cx-48,cy-18,28,26);X.fillRect(cx+20,cy-18,28,26);
- X.fillStyle='#d7c27f';X.fillRect(cx-2,cy-18,4,26);
- X.fillStyle='#f1c85a';X.beginPath();X.arc(cx,cy-54,7,0,7);X.fill();
+ X.fillStyle='#0008';X.beginPath();X.ellipse(cx,cy+108,140,30,0,0,7);X.fill();
+ X.fillStyle='#332c25';X.fillRect(cx-116,cy-16,232,122);
+ X.fillStyle='#5d5347';X.fillRect(cx-104,cy-6,208,112);
+ X.fillStyle='#796b59';X.fillRect(cx-94,cy+3,188,98);
+ X.fillStyle='#40382f';X.fillRect(cx-94,cy+86,188,16);
+ for(const sx of [-82,82]){
+   X.fillStyle='#302923';X.fillRect(cx+sx-31,cy-75,62,177);
+   X.fillStyle='#6e6252';X.fillRect(cx+sx-23,cy-64,46,166);
+   X.fillStyle='#4a4035';X.fillRect(cx+sx-31,cy-75,62,12);
+   X.fillStyle='#8f7954';X.beginPath();X.moveTo(cx+sx-38,cy-64);X.lineTo(cx+sx,cy-126);X.lineTo(cx+sx+38,cy-64);X.closePath();X.fill();
+   X.fillStyle='#39261f';X.beginPath();X.moveTo(cx+sx-34,cy-69);X.lineTo(cx+sx,cy-116);X.lineTo(cx+sx+34,cy-69);X.closePath();X.fill();
+   X.fillStyle='#31556a';X.fillRect(cx+sx-11,cy-37,22,27);X.fillStyle='#d5b96c';X.fillRect(cx+sx-2,cy-37,4,27);
+ }
+ X.fillStyle='#bda46e';X.fillRect(cx-23,cy+28,46,74);X.fillStyle='#2b211c';X.beginPath();X.arc(cx,cy+28,23,Math.PI,0);X.fill();
+ X.fillStyle='#6ec6df';X.fillRect(cx-49,cy-18,30,27);X.fillRect(cx+19,cy-18,30,27);
+ X.fillStyle='#d7c27f';X.fillRect(cx-2,cy-18,4,27);
+ X.fillStyle='#f4cf62';X.beginPath();X.arc(cx,cy-55,7,0,7);X.fill();
 
- // NPCs delante de los edificios para reforzar la escala.
+ // NPCs al frente, manteniendo escala y puntos de interacción.
  for(const n of NPCS){
    X.fillStyle='#0005';X.beginPath();X.ellipse(n.x,n.y+14,12,4,0,0,7);X.fill();
    X.fillStyle=n.c;X.beginPath();X.moveTo(n.x-10,n.y+14);X.lineTo(n.x-6,n.y-6);X.lineTo(n.x+6,n.y-6);X.lineTo(n.x+10,n.y+14);X.fill();
@@ -633,23 +664,36 @@ function draw(){X.fillStyle='#0a0806';X.fillRect(0,0,W,H);if(!P)return;
  const L=[];if(!DN)for(const o of DEC)if(vis(o))L.push([o.y,()=>dec(o)]);
  for(const m of M)if(!m.dead&&vis(m))L.push([m.y,()=>{if(P.tg===m){X.strokeStyle='#f4d03f';X.lineWidth=2;X.beginPath();X.ellipse(m.x,m.y+12,22,9,0,0,7);X.stroke()}mdraw(m)}]);
  if(petOn())L.push([PET.y,petdraw]);L.push([P.y,pdraw]);L.sort((a,b)=>a[0]-b[0]);for(const a of L)a[1]();
- // Oclusión de profundidad: si el jugador queda detrás de un edificio, se redibuja su volumen delante de él.
+ // Oclusión de profundidad: el volumen de cada edificio tapa al jugador cuando corresponde.
  const cityOcc=(bx,by,w,h,roof)=>{
-   X.fillStyle='#0007';X.beginPath();X.ellipse(bx,by+18,w*.62,18,0,0,7);X.fill();
-   X.fillStyle='#29241e';X.fillRect(bx-w/2-8,by-h+4,w+16,h*.72);
-   X.fillStyle='#8f7657';X.fillRect(bx-w/2,by-h,w,h*.72);
-   X.fillStyle='#a98c66';X.fillRect(bx-w/2+8,by-h+8,w-16,h*.72-8);
-   X.fillStyle='#321f1b';X.beginPath();X.moveTo(bx-w/2-18,by-h);X.lineTo(bx,by-h-82);X.lineTo(bx+w/2+18,by-h);X.lineTo(bx+w/2+8,by-h+12);X.lineTo(bx,by-h-62);X.lineTo(bx-w/2-8,by-h+12);X.closePath();X.fill();
-   X.fillStyle=roof;X.beginPath();X.moveTo(bx-w/2-12,by-h-5);X.lineTo(bx,by-h-72);X.lineTo(bx+w/2+12,by-h-5);X.lineTo(bx,by-h+13);X.closePath();X.fill();
-   X.fillStyle='#3b2618';X.fillRect(bx-15,by-48,30,48);X.fillStyle='#d7a83e';X.beginPath();X.arc(bx+7,by-25,3,0,7);X.fill();
-   for(const sx of [-w*.27,w*.27]){X.fillStyle='#283d4b';X.fillRect(bx+sx-13,by-h*.52,26,24);X.fillStyle='#e7c76a';X.fillRect(bx+sx-2,by-h*.52,4,24);X.fillRect(bx+sx-13,by-h*.52+10,26,4)}
-   X.fillStyle='#604738';X.fillRect(bx+w*.24,by-h-28,18,40);X.fillStyle='#3b2924';X.fillRect(bx+w*.21,by-h-31,24,6);
+   X.fillStyle='#0008';X.beginPath();X.ellipse(bx,by+20,w*.67,21,0,0,7);X.fill();
+   X.fillStyle='#29231d';X.fillRect(bx-w/2-12,by-h+5,w+24,h*.78+9);
+   X.fillStyle='#705d46';X.fillRect(bx-w/2,by-h,w,h*.78);
+   X.fillStyle='#9a815e';X.fillRect(bx-w/2+9,by-h+8,w-18,h*.78-8);
+   X.fillStyle='#b39a72';X.fillRect(bx-w/2+13,by-h+13,w-26,5);
+   X.fillStyle='#251b17';X.fillRect(bx-w/2-14,by-h+h*.78-4,w+28,12);
+   X.fillStyle='#241817';X.beginPath();X.moveTo(bx-w/2-24,by-h+4);X.lineTo(bx,by-h-91);X.lineTo(bx+w/2+24,by-h+4);X.lineTo(bx+w/2+12,by-h+18);X.lineTo(bx,by-h-67);X.lineTo(bx-w/2-12,by-h+18);X.closePath();X.fill();
+   X.fillStyle=roof;X.beginPath();X.moveTo(bx-w/2-17,by-h+1);X.lineTo(bx,by-h-78);X.lineTo(bx+w/2+17,by-h+1);X.lineTo(bx,by-h+17);X.closePath();X.fill();
+   X.strokeStyle='#d0aa63';X.lineWidth=3;X.beginPath();X.moveTo(bx-w/2-17,by-h+1);X.lineTo(bx,by-h-78);X.lineTo(bx+w/2+17,by-h+1);X.stroke();
+   X.fillStyle='#2e2018';X.fillRect(bx-18,by-52,36,52);X.fillStyle='#5b3823';X.fillRect(bx-13,by-47,26,47);
+   for(const sx of [-w*.27,w*.27]){X.fillStyle='#34271e';X.fillRect(bx+sx-16,by-h*.52-3,32,30);X.fillStyle='#31556a';X.fillRect(bx+sx-12,by-h*.52,24,22);X.fillStyle='#d4b66d';X.fillRect(bx+sx-2,by-h*.52,4,22);X.fillRect(bx+sx-12,by-h*.52+9,24,4)}
  };
  const occs=[
-   [HX-285,HY-95,180,120,'#a33d35'],[HX+285,HY-95,180,120,'#456a8f'],
-   [HX-270,HY+245,170,112,'#6b4d83'],[HX+270,HY+245,170,112,'#4d7b5b']
+   [HX-285,HY-95,180,120,'#9d3932'],[HX+285,HY-95,180,120,'#3f668e'],
+   [HX-270,HY+245,170,112,'#684978'],[HX+270,HY+245,170,112,'#4c795b']
  ];
- for(const b of occs)if(P.y<b[1]+22&&Math.abs(P.x-b[0])<b[2]/2+24&&P.y>b[1]-b[3]-90)cityOcc(...b);
+ for(const b of occs)if(P.y<b[1]+22&&Math.abs(P.x-b[0])<b[2]/2+28&&P.y>b[1]-b[3]-92)cityOcc(...b);
+ // El castillo también oculta al jugador si queda detrás de su fachada.
+ const ccx=HX,ccy=HY-205;
+ if(P.y<ccy+108&&P.y>ccy-78&&Math.abs(P.x-ccx)<118){
+   X.fillStyle='#0008';X.beginPath();X.ellipse(ccx,ccy+108,140,30,0,0,7);X.fill();
+   X.fillStyle='#332c25';X.fillRect(ccx-116,ccy-16,232,122);
+   X.fillStyle='#5d5347';X.fillRect(ccx-104,ccy-6,208,112);
+   X.fillStyle='#796b59';X.fillRect(ccx-94,ccy+3,188,98);
+   X.fillStyle='#40382f';X.fillRect(ccx-94,ccy+86,188,16);
+   for(const sx of [-82,82]){X.fillStyle='#302923';X.fillRect(ccx+sx-31,ccy-75,62,177);X.fillStyle='#6e6252';X.fillRect(ccx+sx-23,ccy-64,46,166)}
+   X.fillStyle='#bda46e';X.fillRect(ccx-23,ccy+28,46,74);X.fillStyle='#2b211c';X.beginPath();X.arc(ccx,ccy+28,23,Math.PI,0);X.fill();
+ }
 
  for(const e of E){X.shadowColor=e.c;X.shadowBlur=12;X.strokeStyle=e.c;if(e.k=='s'){const u=1-e.t/.25;X.lineWidth=7*(1-u)+1;X.beginPath();X.arc(e.x,e.y,38+u*10,e.a-1.1+u*1.2,e.a+.2+u*1.2);X.stroke()}else if(e.k=='b'){X.lineWidth=3;X.beginPath();X.moveTo(e.x1,e.y1);X.lineTo(e.x2,e.y2);X.stroke()}else{X.lineWidth=4;X.beginPath();X.arc(e.x,e.y,(e.r||120)*(1-e.t/.35),0,7);X.stroke()}X.shadowBlur=0}
  for(const z of ZN){X.fillStyle='#2ecc7122';X.beginPath();X.arc(z.x,z.y,z.r,0,7);X.fill();X.strokeStyle='#2ecc71';X.lineWidth=2;X.stroke();X.strokeStyle='#e8dcc0';for(let i=0;i<7;i++){const f=(T*3+i*.37)%1,ax=z.x+Math.cos(i*2.4)*z.r*.75*((i%3+1)/3),ay=z.y+Math.sin(i*2.4)*z.r*.75*((i%3+1)/3);X.beginPath();X.moveTo(ax,ay-60+f*60);X.lineTo(ax,ay-44+f*60);X.stroke()}}
