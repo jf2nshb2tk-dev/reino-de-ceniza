@@ -1,4 +1,4 @@
-const CACHE = "reino-ceniza-v7";
+const CACHE = "reino-ceniza-v8";
 
 self.addEventListener("install", event => {
   event.waitUntil(
