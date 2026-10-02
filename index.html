@@ -133,7 +133,7 @@ body:not(.play) #np{display:none!important}
 body{font-size:11px}
 button{padding:3px 7px}
 .sm{font-size:10px}
-#vg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,.55) 100%)}
+#vg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,.3) 100%)}
 body:not(.play) #vg{display:none}
 #hud{max-width:calc(100vw - 150px);font-size:10px}
 #hud #nm{font-size:11px}
@@ -816,8 +816,8 @@ function init3D(){
  CA3=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,.1,12000);
  GR3=new THREE.Group();
  SC3.add(GR3);
- SC3.add(new THREE.AmbientLight(0xffffff,2));
- const sun=new THREE.DirectionalLight(0xffffff,1.5);
+ SC3.add(new THREE.AmbientLight(0xffffff,3.2));
+ const sun=new THREE.DirectionalLight(0xffffff,2.2);
  sun.position.set(-900,1500,-700);
  SC3.add(sun);
  const test=new THREE.Mesh(new THREE.BoxGeometry(220,120,220),new THREE.MeshBasicMaterial({color:0xffcc33}));
@@ -833,7 +833,9 @@ function init3D(){
 }
 function buildTerrain3(){
  const qs=[{x:WW/4,z:WH/4,w:WW/2,d:WH/2,c:0x66727a},{x:WW*3/4,z:WH/4,w:WW/2,d:WH/2,c:0xa98245},{x:WW/4,z:WH*3/4,w:WW/2,d:WH/2,c:0x405846},{x:WW*3/4,z:WH*3/4,w:WW/2,d:WH/2,c:0x55362d}];
- for(const q of qs){const g=new THREE.PlaneGeometry(q.w,q.d,12,12),m=new THREE.Mesh(g,mat3(q.c));m.rotation.x=-Math.PI/2;m.position.set(q.x,0,q.z);m.receiveShadow=true;GR3.add(m)}
+ if(!OVc)mkOV();
+ const tex=new THREE.CanvasTexture(OVc);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(WW,WH),new THREE.MeshBasicMaterial({map:tex}));ground.rotation.x=-Math.PI/2;ground.position.set(WW/2,-1,WH/2);GR3.add(ground);
  const city=new THREE.Mesh(new THREE.CylinderGeometry(545,560,18,64),mat3(0x3b342c));city.position.set(HX,9,HY);city.receiveShadow=true;GR3.add(city);
  const inner=new THREE.Mesh(new THREE.CylinderGeometry(405,420,22,64),mat3(0x625748));inner.position.set(HX,20,HY);inner.receiveShadow=true;GR3.add(inner);
  for(let i=0;i<34;i++){const a=i*Math.PI*2/34,r=430+(i%3)*22;box3(HX+Math.cos(a)*r,HY+Math.sin(a)*r,26,20,34,0x766756,a+Math.PI/4)}
