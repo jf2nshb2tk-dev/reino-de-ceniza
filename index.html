@@ -810,7 +810,7 @@ function init3D(){
  GR3=new THREE.Group();SC3.add(GR3);SC3.add(new THREE.AmbientLight(0xffffff,2.2));SC3.add(new THREE.HemisphereLight(0xb9c7dd,0x24170e,1.8));
  const sun=new THREE.DirectionalLight(0xffe5b0,2.1);sun.position.set(-900,1500,-700);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-1800;sun.shadow.camera.right=1800;sun.shadow.camera.top=1800;sun.shadow.camera.bottom=-1800;SC3.add(sun);
  buildTerrain3();buildCity3();buildDecor3();
- const test=new THREE.Mesh(new THREE.BoxGeometry(180,80,180),new THREE.MeshBasicMaterial({color:0xffcc33}));test.position.set(HX,40,HY);GR3.add(test);
+ const test=new THREE.Mesh(new THREE.BoxGeometry(220,120,220),new THREE.MeshBasicMaterial({color:0xffcc33}));test.position.set(HX,60,HY);SC3.add(test);
  ready3=true;
 }
 function buildTerrain3(){
@@ -872,5 +872,5 @@ function render3D(){
 
 let last=0,lh=0;function loop(t){requestAnimationFrame(loop);T=t/1000;const dt=Math.min(.05,(t-last)/1000||0);last=t;if(P){upd(dt);ambi(dt)}draw();ambd();render3D();if(t-lh>100){lh=t;hud()}}
 requestAnimationFrame(loop);
-setTimeout(()=>{if(!OVc)mkOV()},400);init3D();
+setTimeout(()=>{if(!OVc)mkOV()},400);try{init3D()}catch(e){console.error('3D INIT',e);const cv=document.getElementById('c3d');cv.style.background='#ff00ff';cv.style.opacity='1';cv.title='3D ERROR: '+e.message}
 </script></body></html>
