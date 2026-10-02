@@ -362,7 +362,27 @@ function stats(){const c=CL[P.cls],r=1+.1*P.res,b=P.st,G=gear(),B=bon(),w=G.d,a=
  return{B,dmg:(4+b[c.m]*.6+b.str*.15+w)*r*(P.bf>0?1.5:1)*(1+.04*mt('A1')+B.dm/100),def:b.agi*.2+a+3*mt('D2'),hp:(60+b.vit*7+P.lv*8+G.hp)*r*(1+.04*mt('D1')+B.hp/100),mp:20+b.ene*4+P.lv*3,range:c.r,spd:(170+b.agi*.5+G.sp)*(1+.03*mt('U3')+B.sp/100)*(P.hs>0?1.35:1),cdn:Math.max(.35,.85-b.agi*.004)*(P.hs>0?.7:1)}}
 function msg(t,c){logs.push({t,c:c||'#e8dcc0',a:7});if(logs.length>6)logs.shift()}
 function fl(x,y,s,c){F.push({x,y,s,c,t:1})}
-function mv(x,y,dt,s){P.mvg=1;if(Math.abs(x-P.x)>2)P.f=x>P.x?1:-1;const a=Math.atan2(y-P.y,x-P.x),d=Math.min(s.spd*dt,dist(P,{x,y}));P.x=Math.max(10,Math.min(WW-10,P.x+Math.cos(a)*d));P.y=Math.max(10,Math.min(WH-10,P.y+Math.sin(a)*d))}
+const CITY_BLOCKS=[
+ {x:-285,y:-95,w:180,h:120},{x:285,y:-95,w:180,h:120},
+ {x:-270,y:245,w:170,h:112},{x:270,y:245,w:170,h:112},
+ {x:0,y:-205,w:210,h:115},{x:-78,y:-205,w:56,h:165},{x:78,y:-205,w:56,h:165}
+];
+function blockedCity(x,y,r=12){
+ if(DN||Math.hypot(x-HX,y-HY)>520)return false;
+ for(const b of CITY_BLOCKS){
+   const bx=HX+b.x,by=HY+b.y;
+   const cx=Math.max(bx-b.w/2,Math.min(x,bx+b.w/2));
+   const cy=Math.max(by-b.h/2,Math.min(y,by+b.h/2));
+   if((x-cx)*(x-cx)+(y-cy)*(y-cy)<r*r)return true;
+ }
+ return false;
+}
+function movePlayer(dx,dy){
+ const r=12,nx=P.x+dx,ny=P.y+dy;
+ if(!blockedCity(nx,P.y,r))P.x=Math.max(10,Math.min(WW-10,nx));
+ if(!blockedCity(P.x,ny,r))P.y=Math.max(10,Math.min(WH-10,ny));
+}
+function mv(x,y,dt,s){P.mvg=1;if(Math.abs(x-P.x)>2)P.f=x>P.x?1:-1;const a=Math.atan2(y-P.y,x-P.x),d=Math.min(s.spd*dt,dist(P,{x,y}));movePlayer(Math.cos(a)*d,Math.sin(a)*d)}
 function hit(m,d,s,nb){P.f=m.x>P.x?1:-1;if(nb)return hit0(m,d,s,1);
  if(CL[P.cls].r>60)PJ.push({x:P.x,y:P.y-6,m,d,s,a:0});else{E.push({k:'s',x:P.x,y:P.y,a:Math.atan2(m.y-P.y,m.x-P.x),t:.25,c:CL[P.cls].c});hit0(m,d,s)}}
 function hit0(m,d,s,nb){const B=s.B||bon(),cr=rnd()<Math.min(.75,.1+.02*mt('A2')+B.cc/100),v=Math.max(1,Math.round(d*(.8+rnd()*.4)*(cr?1.6+B.cd/100:1)*(m.hp<m.mhp*.3?1+.1*mt('A4'):1)));m.hp-=v;m.agg=true;{const ls=.015*mt('D4')+(P.ls>0?.1:0)+B.ls/100;if(ls)P.hp=Math.min(s.hp||stats().hp,P.hp+v*ls)}fl(m.x,m.y-20,(cr?'¡':'')+v,cr?'#f4d03f':'#fff');burst(m.x,m.y,cr?'#f4d03f':'#ff8a8a',cr?12:6);if(!nb)snd(cr?'crit':'hit');
@@ -415,7 +435,7 @@ function upd(dt){const s=stats(),safe=dist(P,{x:HX,y:HY})<500;P.mvg=0;P.k3-=dt;P
  P.hp=Math.min(s.hp,P.hp+(safe?s.hp*.08:s.hp*(.004+.003*mt('D3')))*dt);P.mp=Math.min(s.mp,P.mp+(safe?s.mp*.1:s.mp*.01)*dt);
  if(helper)auto(s);
  const joy=JS.a&&Math.hypot(JS.dx,JS.dy)>.15;
- if(joy){P.dp=P.dest=null;helper=false;P.mvg=1;if(Math.abs(JS.dx)>.1)P.f=JS.dx>0?1:-1;P.x=Math.max(10,Math.min(WW-10,P.x+JS.dx*s.spd*dt));P.y=Math.max(10,Math.min(WH-10,P.y+JS.dy*s.spd*dt));if(P.tg&&(P.tg.dead||dist(P,P.tg)>s.range))P.tg=null;if(!P.tg&&ATKH)P.tg=near(s.range)}
+ if(joy){P.dp=P.dest=null;helper=false;P.mvg=1;if(Math.abs(JS.dx)>.1)P.f=JS.dx>0?1:-1;movePlayer(JS.dx*s.spd*dt,JS.dy*s.spd*dt);if(P.tg&&(P.tg.dead||dist(P,P.tg)>s.range))P.tg=null;if(!P.tg&&ATKH)P.tg=near(s.range)}
  else if(ATKH&&(!P.tg||P.tg.dead))atk();
  if(P.dp&&!D.includes(P.dp))P.dp=null;
  if(P.tg){const d=dist(P,P.tg);if(d>s.range){if(!joy)mv(P.tg.x,P.tg.y,dt,s)}else if(P.cd<=0){hit(P.tg,s.dmg,s);P.cd=s.cdn}}
