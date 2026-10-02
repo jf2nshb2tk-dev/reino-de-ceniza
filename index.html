@@ -208,6 +208,11 @@ body.touch #lg{top:calc(126px + env(safe-area-inset-top,0px))}
 <div id="sel"><h1>REINO DE CENIZA</h1><p class="sm" id="selp"></p><div id="cards"></div><div id="crt" style="display:none"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 <script>
+if(typeof THREE==='undefined'){
+  document.write('<script src="https://unpkg.com/three@0.180.0/build/three.min.js"><\\/script>');
+}
+</script>
+<script>
 const $=s=>document.querySelector(s),C=$('#c'),X=C.getContext('2d');
 const IS_T=matchMedia('(pointer:coarse)').matches,GLOWK=IS_T?0:.7;
 try{const ds=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowBlur');Object.defineProperty(X,'shadowBlur',{get(){return ds.get.call(X)},set(v){ds.set.call(X,v*GLOWK)},configurable:true})}catch(e){}
