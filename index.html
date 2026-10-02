@@ -444,12 +444,93 @@ function dec(o){const x=o.x,y=o.y,e=o.e;X.fillStyle='#0005';X.beginPath();X.elli
  else if(e=='🪨'){X.fillStyle='#6b6b73';X.beginPath();X.ellipse(x,y+2,15,10,0,0,7);X.fill();X.fillStyle='#8d8d97';X.beginPath();X.ellipse(x-3,y-1,8,5,0,0,7);X.fill()}
  else if(e=='🌿'){X.fillStyle='#2f8a3c';for(let i=-1;i<2;i++){X.beginPath();X.ellipse(x+i*7,y+3-Math.abs(i)*2,5,10,i*.5,0,7);X.fill()}}
  else{X.fillStyle='#e8dcc0';X.fillRect(x-1.5,y,3,8);X.fillStyle='#c0392b';X.beginPath();X.arc(x,y,6,Math.PI,0);X.fill();X.fillStyle='#fff';X.fillRect(x-3,y-4,2,2)}}
-function town(){X.fillStyle='#3a3226';X.beginPath();X.arc(HX,HY,340,0,7);X.fill();X.strokeStyle='#6b5a3a';X.lineWidth=8;X.stroke();X.fillStyle='#4a4030';X.beginPath();X.arc(HX,HY,220,0,7);X.fill();
- for(const [dx,dy,w] of [[-190,-140,120],[140,-160,112],[-40,-240,100]]){const bx=HX+dx,by=HY+dy;X.fillStyle='#0004';X.fillRect(bx-w/2+6,by+4,w,20);X.fillStyle='#7a6448';X.fillRect(bx-w/2,by-68,w,76);X.fillStyle='#8c2f2f';X.beginPath();X.moveTo(bx-w/2-12,by-68);X.lineTo(bx,by-128);X.lineTo(bx+w/2+12,by-68);X.fill();X.fillStyle='#f4d03f';X.fillRect(bx-8,by-36,16,20)}
- const k=.75+Math.sin(T*9)*.15,g=X.createRadialGradient(HX,HY+40,2,HX,HY+40,180);g.addColorStop(0,`rgba(255,180,60,${.5*k})`);g.addColorStop(1,'rgba(255,140,40,0)');X.fillStyle=g;X.fillRect(HX-180,HY-140,360,360);
- X.fillStyle='#e67e22';X.beginPath();X.ellipse(HX,HY+32,14,24*k+4,0,0,7);X.fill();X.fillStyle='#f4d03f';X.beginPath();X.ellipse(HX,HY+36,7,14,0,0,7);X.fill();
- for(const n of NPCS){X.fillStyle='#0005';X.beginPath();X.ellipse(n.x,n.y+14,12,4,0,0,7);X.fill();X.fillStyle=n.c;X.beginPath();X.moveTo(n.x-10,n.y+14);X.lineTo(n.x-6,n.y-6);X.lineTo(n.x+6,n.y-6);X.lineTo(n.x+10,n.y+14);X.fill();X.fillStyle='#f0c8a0';X.beginPath();X.arc(n.x,n.y-12,8,0,7);X.fill();X.font='12px serif';X.fillStyle='#fff';X.fillText(n.e,n.x,n.y-30+Math.sin(T*3)*2);X.font='bold 10px sans-serif';X.fillStyle='#d4a84b';X.fillText(n.n,n.x,n.y+30);if(NEARN===n){X.font='bold 10px sans-serif';X.fillStyle='#f4d03f';X.fillText('▼ Hablar',n.x,n.y-52+Math.sin(T*5)*2)}}
- X.font='bold 12px sans-serif';X.fillStyle='#d4a84b';X.fillText('ALDEA SEGURA',HX,HY+104)}
+function town(){
+ const R=520, PZ=285;
+ // Base de la ciudad: anillo, caminos y plaza para darle escala y profundidad.
+ X.fillStyle='#302a22';X.beginPath();X.arc(HX,HY,R,0,7);X.fill();
+ X.strokeStyle='#74613f';X.lineWidth=12;X.stroke();
+ X.fillStyle='#514735';X.beginPath();X.arc(HX,HY,390,0,7);X.fill();
+ X.strokeStyle='#8b7650';X.lineWidth=3;X.beginPath();X.arc(HX,HY,390,0,7);X.stroke();
+
+ // Caminos principales desde la plaza hacia los cuatro biomas.
+ const path=(ang,len,w)=>{
+   const x1=HX+Math.cos(ang)*70,y1=HY+Math.sin(ang)*70,x2=HX+Math.cos(ang)*len,y2=HY+Math.sin(ang)*len;
+   X.strokeStyle='#211b15';X.lineWidth=w+18;X.lineCap='round';X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.strokeStyle='#8d7550';X.lineWidth=w;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+   X.strokeStyle='#b49a6b';X.lineWidth=4;X.beginPath();X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+ };
+ path(-Math.PI/2,500,62);path(0,500,62);path(Math.PI/2,500,62);path(Math.PI,500,62);
+
+ // Plaza central empedrada.
+ const pg=X.createRadialGradient(HX,HY,20,HX,HY,185);pg.addColorStop(0,'#7a6b54');pg.addColorStop(1,'#4a4031');
+ X.fillStyle=pg;X.beginPath();X.arc(HX,HY,185,0,7);X.fill();
+ X.strokeStyle='#a18c66';X.lineWidth=5;X.beginPath();X.arc(HX,HY,185,0,7);X.stroke();
+ for(let i=0;i<18;i++){const q=i*Math.PI*2/18;X.fillStyle='#9b8865';X.beginPath();X.arc(HX+Math.cos(q)*145,HY+Math.sin(q)*145,3,0,7);X.fill()}
+
+ // Fuente/estatua central con volumen.
+ X.fillStyle='#0005';X.beginPath();X.ellipse(HX,HY+78,72,20,0,0,7);X.fill();
+ X.fillStyle='#6b6255';X.beginPath();X.ellipse(HX,HY+48,62,20,0,0,7);X.fill();
+ X.fillStyle='#918776';X.fillRect(HX-48,HY-8,96,56);
+ X.fillStyle='#b4aa96';X.fillRect(HX-34,HY-30,68,24);
+ X.fillStyle='#6ec6df';X.beginPath();X.ellipse(HX,HY-6,38,11,0,0,7);X.fill();
+ X.fillStyle='#d7f6ff';X.beginPath();X.arc(HX,HY-55,18,0,7);X.fill();
+
+ // Faroles y árboles de plaza.
+ for(const [dx,dy] of [[-235,-20],[235,-20],[-210,185],[210,185]]){
+   X.fillStyle='#0005';X.beginPath();X.ellipse(HX+dx,HY+dy+12,13,5,0,0,7);X.fill();
+   X.fillStyle='#4b3520';X.fillRect(HX+dx-3,HY+dy-22,6,34);
+   X.fillStyle='#f7d76a';X.beginPath();X.arc(HX+dx,HY+dy-27,7,0,7);X.fill();
+ }
+
+ // Casas grandes con paredes, zócalo, techo, puerta, ventanas y sombra.
+ const house=(dx,dy,w,h,roof)=>{
+   const bx=HX+dx,by=HY+dy,sh=h*.72;
+   X.fillStyle='#0007';X.beginPath();X.ellipse(bx,by+18,w*.62,18,0,0,7);X.fill();
+   // cimientos
+   X.fillStyle='#29241e';X.fillRect(bx-w/2-8,by-h+4,w+16,sh);
+   X.fillStyle='#8f7657';X.fillRect(bx-w/2,by-h,w,sh);
+   X.fillStyle='#a98c66';X.fillRect(bx-w/2+8,by-h+8,w-16,sh-8);
+   // techo con volumen
+   X.fillStyle='#321f1b';X.beginPath();X.moveTo(bx-w/2-18,by-h);X.lineTo(bx,by-h-82);X.lineTo(bx+w/2+18,by-h);X.lineTo(bx+w/2+8,by-h+12);X.lineTo(bx,by-h-62);X.lineTo(bx-w/2-8,by-h+12);X.closePath();X.fill();
+   X.fillStyle=roof;X.beginPath();X.moveTo(bx-w/2-12,by-h-5);X.lineTo(bx,by-h-72);X.lineTo(bx+w/2+12,by-h-5);X.lineTo(bx,by-h+13);X.closePath();X.fill();
+   // puerta
+   X.fillStyle='#3b2618';X.fillRect(bx-15,by-48,30,48);X.fillStyle='#d7a83e';X.beginPath();X.arc(bx+7,by-25,3,0,7);X.fill();
+   // ventanas
+   for(const sx of [-w*.27,w*.27]){X.fillStyle='#283d4b';X.fillRect(bx+sx-13,by-h*.52,26,24);X.fillStyle='#e7c76a';X.fillRect(bx+sx-2,by-h*.52,4,24);X.fillRect(bx+sx-13,by-h*.52+10,26,4)}
+   // chimenea
+   X.fillStyle='#604738';X.fillRect(bx+w*.24,by-h-28,18,40);X.fillStyle='#3b2924';X.fillRect(bx+w*.21,by-h-31,24,6);
+ };
+ house(-285,-95,180,120,'#a33d35');
+ house(285,-95,180,120,'#456a8f');
+ house(-270,245,170,112,'#6b4d83');
+ house(270,245,170,112,'#4d7b5b');
+
+ // Edificio principal tipo castillo, más alto para que la ciudad tenga un punto focal.
+ const cx=HX,cy=HY-205;
+ X.fillStyle='#0007';X.beginPath();X.ellipse(cx,cy+98,125,28,0,0,7);X.fill();
+ X.fillStyle='#4a4035';X.fillRect(cx-105,cy-20,210,115);
+ X.fillStyle='#665b4c';X.fillRect(cx-92,cy-8,184,103);
+ for(const sx of [-78,78]){X.fillStyle='#3d362d';X.fillRect(cx+sx-28,cy-70,56,165);X.fillStyle='#746756';X.fillRect(cx+sx-21,cy-61,42,156)}
+ X.fillStyle='#8e7a58';X.beginPath();X.moveTo(cx-118,cy-20);X.lineTo(cx-78,cy-92);X.lineTo(cx-38,cy-20);X.closePath();X.fill();
+ X.fillStyle='#8e7a58';X.beginPath();X.moveTo(cx+38,cy-20);X.lineTo(cx+78,cy-92);X.lineTo(cx+118,cy-20);X.closePath();X.fill();
+ X.fillStyle='#3b2924';X.beginPath();X.moveTo(cx-110,cy-70);X.lineTo(cx-78,cy-120);X.lineTo(cx-46,cy-70);X.closePath();X.fill();
+ X.fillStyle='#3b2924';X.beginPath();X.moveTo(cx+46,cy-70);X.lineTo(cx+78,cy-120);X.lineTo(cx+110,cy-70);X.closePath();X.fill();
+ X.fillStyle='#bda46e';X.fillRect(cx-22,cy+28,44,67);X.fillStyle='#2b2520';X.beginPath();X.arc(cx,cy+28,22,Math.PI,0);X.fill();
+ X.fillStyle='#74c9e8';X.fillRect(cx-48,cy-18,28,26);X.fillRect(cx+20,cy-18,28,26);
+ X.fillStyle='#d7c27f';X.fillRect(cx-2,cy-18,4,26);
+ X.fillStyle='#f1c85a';X.beginPath();X.arc(cx,cy-54,7,0,7);X.fill();
+
+ // NPCs delante de los edificios para reforzar la escala.
+ for(const n of NPCS){
+   X.fillStyle='#0005';X.beginPath();X.ellipse(n.x,n.y+14,12,4,0,0,7);X.fill();
+   X.fillStyle=n.c;X.beginPath();X.moveTo(n.x-10,n.y+14);X.lineTo(n.x-6,n.y-6);X.lineTo(n.x+6,n.y-6);X.lineTo(n.x+10,n.y+14);X.fill();
+   X.fillStyle='#f0c8a0';X.beginPath();X.arc(n.x,n.y-12,8,0,7);X.fill();
+   X.font='12px serif';X.fillStyle='#fff';X.fillText(n.e,n.x,n.y-30+Math.sin(T*3)*2);
+   X.font='bold 10px sans-serif';X.fillStyle='#d4a84b';X.fillText(n.n,n.x,n.y+30);
+   if(NEARN===n){X.font='bold 10px sans-serif';X.fillStyle='#f4d03f';X.fillText('▼ Hablar',n.x,n.y-52+Math.sin(T*5)*2)}
+ }
+ X.font='bold 15px sans-serif';X.fillStyle='#e0bd69';X.fillText('REINO DE CENIZA',HX,HY+475);
+}
 const HC=['#6fb6ff','#f2c14e','#4fbf6a','#ff7a45','#c792ff'];
 function mdraw(m){X.save();if(m.boss){X.translate(m.x,m.y);X.scale(1.9,1.9);X.translate(-m.x,-m.y)}if(m.b>=0){if(IS_T){X.strokeStyle=HC[m.b];X.lineWidth=2;X.globalAlpha=.7;X.beginPath();X.ellipse(m.x,m.y+12,17,7,0,0,7);X.stroke();X.globalAlpha=1}else X.filter='hue-rotate('+HU[m.b]+'deg) saturate(1.3)'}mdraw0(m);const ic=(m.st>0?'💫':'')+(m.sl>0?'❄️':'')+(m.dt>0?(m.dk=='p'?'☠️':'🔥'):'');if(ic){X.font='12px serif';X.fillText(ic,m.x,m.y-50)}X.restore()}
 function mdraw0(m){const y=m.y+Math.sin(T*6+m.hx)*2,x=m.x,t=m.t,f=m.x<P.x?1:-1;X.fillStyle='#0006';X.beginPath();X.ellipse(m.x,m.y+12,14,5,0,0,7);X.fill();
