@@ -813,7 +813,6 @@ function ambd(){if(!P||!AP.length||APa<=0)return;X.save();
  X.restore()}
 
 // === RENDER 3D / ISOMÉTRICO ===
-// MU PASS 1 FINAL — visual layer only; gameplay systems remain untouched.
 let R3=null,SC3=null,CA3=null,GR3=null,FX3=null,ACT3=new Map(),ready3=false;
 const M3={};
 function mat3(c,rough=.82,metal=.04){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});}
@@ -844,7 +843,7 @@ function init3D(){
  SC3=new THREE.Scene();
  SC3.background=new THREE.Color(0x18232b);
  SC3.fog=new THREE.Fog(0x18232b,4200,9000);
- CA3=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,14000);
+ CA3=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,14000);
  GR3=new THREE.Group();FX3=new THREE.Group();
  SC3.add(GR3,FX3);
  SC3.add(new THREE.HemisphereLight(0xbdd8ee,0x3b3027,2.1));
@@ -852,7 +851,7 @@ function init3D(){
  sun.position.set(-1400,2200,-1100);sun.castShadow=true;
  sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-3000;sun.shadow.camera.right=3000;sun.shadow.camera.top=3000;sun.shadow.camera.bottom=-3000;
  SC3.add(sun);
- buildTerrain3();buildCity3();buildDecor3();buildMUDetails3();
+ buildTerrain3();buildCity3();buildDecor3();
  ready3=true;resize3D();R3.render(SC3,CA3);
 }
 function resize3D(){if(!R3||!CA3)return;R3.setSize(innerWidth,innerHeight,false);CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix()}
@@ -998,74 +997,6 @@ function updateLabel3(sp,name,hp,mhp,lv,boss){
  x.font='bold 13px sans-serif';x.strokeStyle='#000';x.lineWidth=4;x.strokeText('Nv '+lv,128,52);
  x.fillStyle='#e8dcc0';x.fillText('Nv '+lv,128,52);sp.userData.tx.needsUpdate=true;
 }
-// === MU PASS 1 FINAL: armor, silhouettes and world detail ===
-function addMUPlayerDetails3(g){
-  if(g.userData.muDetails)return;
-  g.userData.muDetails=true;
-  const root=g.userData.parts&&g.userData.parts.root;
-  if(!root)return;
-  const cls=P&&P.cls||'war';
-  const armor=cls==='mage'?0x4d3b88:cls==='elf'?0x39724c:0x70442d;
-  const trim=cls==='mage'?0x9b86ff:cls==='elf'?0x8ed77d:0xd4aa58;
-  const dark=cls==='mage'?0x171329:cls==='elf'?0x19341f:0x25150f;
-  // helmet / crown
-  const helm=new THREE.Mesh(new THREE.SphereGeometry(9.3,14,8,0,Math.PI*2,0,Math.PI*.55),mat3(dark,.6,.15));
-  helm.position.set(0,57,0);root.add(helm);
-  const crest=new THREE.Mesh(new THREE.BoxGeometry(2.8,9,10),mat3(trim,.5,.2));
-  crest.position.set(0,62,1);root.add(crest);
-  // shoulder armor and chest plates
-  for(const sx of [-10,10]){
-    const sh=new THREE.Mesh(new THREE.SphereGeometry(5.2,10,8),mat3(trim,.48,.22));
-    sh.scale.set(1.15,.72,.9);sh.position.set(sx,39,0);root.add(sh);
-  }
-  for(const z of [-1.8,1.8]){
-    const plate=new THREE.Mesh(new THREE.BoxGeometry(10,3,2),mat3(trim,.48,.2));
-    plate.position.set(0,34,z);root.add(plate);
-  }
-  // cape / robe silhouette
-  if(cls!=='elf'){
-    const cape=new THREE.Mesh(new THREE.BoxGeometry(12,30,2.2),mat3(dark,.8,0));
-    cape.position.set(0,30,5.2);cape.rotation.x=.06;root.add(cape);
-  }else{
-    const cape=new THREE.Mesh(new THREE.BoxGeometry(10,27,1.8),mat3(0x214d31,.82,0));
-    cape.position.set(0,29,5);root.add(cape);
-  }
-  // class emblem
-  const emblem=new THREE.Mesh(new THREE.CircleGeometry(2.5,12),mat3(trim,.35,.25));
-  emblem.position.set(0,35,-7);emblem.rotation.x=Math.PI;root.add(emblem);
-}
-function buildMUDetails3(){
-  // Castle banners, gates, market stalls, lamps and biome transition stones.
-  const addBanner=(x,z,c)=>{
-    const pole=cyl3(x,z,1.8,55,0x3b2819,7,2);
-    const flag=new THREE.Mesh(new THREE.PlaneGeometry(18,13),mat3(c,.65,0));
-    flag.position.set(x+9,48,z);flag.rotation.y=Math.PI/2;flag.castShadow=true;GR3.add(flag);
-  };
-  addBanner(HX-72,HY-265,0x8e2933);addBanner(HX+72,HY-265,0x31598a);
-  for(const sx of [-70,70]){ 
-    cyl3(HX+sx,HY-147,3,50,0x33251a,8,1);
-    sphere3(HX+sx,50,HY-147,5,0xffd66b);
-  }
-  // city market stalls
-  for(const sx of [-390,390]){
-    box3(HX+sx,HY+5,70,38,45,sx<0?0x6b3d2a:0x4a5d35);
-    const canopy=box3(HX+sx,HY+5,82,4,58,sx<0?0x9b4934:0x536f9a,0,.0);
-    canopy.position.y=43;
-  }
-  // ring of small stones around the plaza
-  for(let i=0;i<24;i++){
-    const a=i*Math.PI*2/24;
-    const x=HX+215*Math.cos(a),z=HY+215*Math.sin(a);
-    cyl3(x,z,4.5,7,0x625849,7,0);
-  }
-  // torches on the four outgoing roads
-  for(const [dx,dz] of [[0,-420],[420,0],[0,420],[-420,0]]){
-    const x=HX+dx,z=HY+dz;
-    cyl3(x,z,2,34,0x3a281c,7,0);
-    sphere3(x,37,z,5,0xffa53a);
-  }
-}
-
 function makeActor3(id,color,boss=false,kind='mob'){
  const g=new THREE.Group();g.userData={kind,boss,phase:Math.random()*6.28,attack:0};
  const root=new THREE.Group();g.add(root);
@@ -1159,10 +1090,9 @@ function zone3(x,z,r,c){
 function render3D(){
  if(!ready3||!P||!R3)return;
  const target=new THREE.Vector3(P.x,18,P.y);
- const cp=new THREE.Vector3(P.x+185,255,P.y+185);
+ const cp=new THREE.Vector3(P.x+220,300,P.y+220);
  CA3.position.lerp(cp,.12);CA3.lookAt(target);CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix();
  const pg=ACT3.get('p')||makeActor3('p',0xd4a84b,false,'player');
-  addMUPlayerDetails3(pg);
  pg.position.set(P.x,0,P.y);
  const moving=!!P.mvg;
  if(moving){
