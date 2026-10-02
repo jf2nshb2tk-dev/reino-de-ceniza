@@ -837,12 +837,12 @@ function sphere3(x,y,z,r,c){
 }
 function init3D(){
  const cv=document.getElementById('c3d');
- R3=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:false});
- R3.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+ R3=new THREE.WebGLRenderer({canvas:cv,antialias:!IS_T,alpha:false,powerPreference:'high-performance'});
+ R3.setPixelRatio(IS_T?0.75:Math.min(window.devicePixelRatio||1,1.25));
  R3.setSize(innerWidth,innerHeight,false);
  R3.setClearColor(0x18232b,1);
- R3.shadowMap.enabled=true;
- R3.shadowMap.type=THREE.PCFSoftShadowMap;
+ R3.shadowMap.enabled=!IS_T;
+ if(!IS_T)R3.shadowMap.type=THREE.PCFShadowMap;
  SC3=new THREE.Scene();
  SC3.background=new THREE.Color(0x18232b);
  SC3.fog=new THREE.Fog(0x18232b,4200,9000);
@@ -851,8 +851,8 @@ function init3D(){
  SC3.add(GR3,FX3);
  SC3.add(new THREE.HemisphereLight(0xbdd8ee,0x3b3027,2.1));
  const sun=new THREE.DirectionalLight(0xfff1d2,2.7);
- sun.position.set(-1400,2200,-1100);sun.castShadow=true;
- sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-3000;sun.shadow.camera.right=3000;sun.shadow.camera.top=3000;sun.shadow.camera.bottom=-3000;
+ sun.position.set(-1400,2200,-1100);sun.castShadow=!IS_T;
+ sun.shadow.mapSize.set(IS_T?256:768,IS_T?256:768);sun.shadow.camera.left=-3000;sun.shadow.camera.right=3000;sun.shadow.camera.top=3000;sun.shadow.camera.bottom=-3000;
  SC3.add(sun);
  buildTerrain3();buildCity3();buildDecor3();
  ready3=true;resize3D();R3.render(SC3,CA3);
@@ -861,7 +861,7 @@ function resize3D(){if(!R3||!CA3)return;R3.setSize(innerWidth,innerHeight,false)
 addEventListener('resize',resize3D);
 function buildTerrain3(){
  if(!OVc)mkOV();
- const tex=new THREE.CanvasTexture(OVc);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+ const tex=new THREE.CanvasTexture(OVc);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=IS_T?1:2;
  const ground=new THREE.Mesh(new THREE.PlaneGeometry(WW,WH),new THREE.MeshStandardMaterial({map:tex,roughness:1,metalness:0}));
  ground.rotation.x=-Math.PI/2;ground.position.set(WW/2,-2,WH/2);ground.receiveShadow=true;GR3.add(ground);
  // Four connected biome borders: no raised slabs and no giant debug geometry.
@@ -1094,7 +1094,7 @@ function render3D(){
  if(!ready3||!P||!R3)return;
  const target=new THREE.Vector3(P.x,18,P.y);
  const cp=new THREE.Vector3(P.x+220,300,P.y+220);
- CA3.position.lerp(cp,.12);CA3.lookAt(target);CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix();
+ CA3.position.lerp(cp,.12);CA3.lookAt(target);
  const pg=ACT3.get('p')||makeActor3('p',0xd4a84b,false,'player');
  pg.position.set(P.x,0,P.y);
  const moving=!!P.mvg;
@@ -1109,6 +1109,8 @@ function render3D(){
  const live=new Set(['p']);
  for(const m of M){
   if(m.dead)continue;
+  const mdx=m.x-P.x,mdy=m.y-P.y;
+  if(IS_T && mdx*mdx+mdy*mdy>850*850){const far=ACT3.get(m);if(far)far.visible=false;continue}
   live.add(m);
   const kind=m.boss?3:m.t;
   let g=ACT3.get(m);
@@ -1118,7 +1120,7 @@ function render3D(){
   else if(Math.hypot(m.x-m.hx,m.y-m.hy)>3)g.rotation.y=Math.atan2(m.x-m.hx,m.y-m.hy);
   g.scale.setScalar(m.boss?1.28:1);
   const hp=g.userData.parts.label;
-  updateLabel3(hp,m.boss?(BN[m.b]||'Jefe'):(MN[m.t]||'Enemigo'),m.hp,m.mhp,m.lv,m.boss);
+  if(!IS_T || m.boss || mdx*mdx+mdy*mdy<430*430)updateLabel3(hp,m.boss?(BN[m.b]||'Jefe'):(MN[m.t]||'Enemigo'),m.hp,m.mhp,m.lv,m.boss);
   animateActor3(g,Math.hypot(m.x-m.hx,m.y-m.hy)>3||m.agg,m.cd<.22 ? .25 : 0);
  }
  for(const [k,g] of ACT3)g.visible=live.has(k);
