@@ -805,11 +805,13 @@ function cyl3(x,z,r,h,c,seg=8){const m=new THREE.Mesh(new THREE.CylinderGeometry
 function cone3(x,z,r,h,c,seg=6){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),mat3(c));m.position.set(x,h/2,z);m.castShadow=true;GR3.add(m);return m}
 function init3D(){
  const cv=document.getElementById('c3d');cv.style.background='#101820';R3=new THREE.WebGLRenderer({canvas:cv,antialias:false,alpha:false,preserveDrawingBuffer:false});R3.setPixelRatio(Math.min(devicePixelRatio,1.5));R3.setSize(innerWidth,innerHeight,false);R3.shadowMap.enabled=false;R3.outputColorSpace=THREE.SRGBColorSpace;
- SC3=new THREE.Scene();SC3.background=new THREE.Color(0x101820);SC3.fog=new THREE.Fog(0x101820,1400,7000);
+ SC3=new THREE.Scene();SC3.background=new THREE.Color(0x203040);
  CA3=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,12000);
- GR3=new THREE.Group();SC3.add(GR3);SC3.add(new THREE.HemisphereLight(0xb9c7dd,0x24170e,1.8));
+ GR3=new THREE.Group();SC3.add(GR3);SC3.add(new THREE.AmbientLight(0xffffff,2.2));SC3.add(new THREE.HemisphereLight(0xb9c7dd,0x24170e,1.8));
  const sun=new THREE.DirectionalLight(0xffe5b0,2.1);sun.position.set(-900,1500,-700);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-1800;sun.shadow.camera.right=1800;sun.shadow.camera.top=1800;sun.shadow.camera.bottom=-1800;SC3.add(sun);
- buildTerrain3();buildCity3();buildDecor3();ready3=true;
+ buildTerrain3();buildCity3();buildDecor3();
+ const test=new THREE.Mesh(new THREE.BoxGeometry(180,80,180),new THREE.MeshBasicMaterial({color:0xffcc33}));test.position.set(HX,40,HY);GR3.add(test);
+ ready3=true;
 }
 function buildTerrain3(){
  const qs=[{x:WW/4,z:WH/4,w:WW/2,d:WH/2,c:0x66727a},{x:WW*3/4,z:WH/4,w:WW/2,d:WH/2,c:0xa98245},{x:WW/4,z:WH*3/4,w:WW/2,d:WH/2,c:0x405846},{x:WW*3/4,z:WH*3/4,w:WW/2,d:WH/2,c:0x55362d}];
@@ -850,14 +852,9 @@ function buildDecor3(){
 function makeActor3(id,color,boss=false){const g=new THREE.Group(),r=boss?18:10,h=boss?42:26,body=new THREE.Mesh(new THREE.CylinderGeometry(r,r*.88,h,8),mat3(color)),head=new THREE.Mesh(new THREE.SphereGeometry(boss?14:8,8,6),mat3(0xd2b08b));body.position.y=h/2+2;head.position.y=h+14;body.castShadow=head.castShadow=true;g.add(body,head);GR3.add(g);ACT3.set(id,g);return g}
 function render3D(){
  if(!ready3||!P||!R3)return;
- const view=Math.max(1,Math.min(innerWidth,innerHeight));
- const zoom=Math.max(.42,Math.min(1.15,view/900));
- const vw=innerWidth/zoom,vh=innerHeight/zoom;
- CA3.left=-vw/2;CA3.right=vw/2;CA3.top=vh/2;CA3.bottom=-vh/2;
- GR3.scale.setScalar(1);
  const target=new THREE.Vector3(P.x,0,P.y);
- const cp=new THREE.Vector3(P.x+900,1050,P.y+900);
- CA3.position.lerp(cp,.18);CA3.lookAt(target);
+ const cp=new THREE.Vector3(P.x+520,620,P.y+520);
+ CA3.position.lerp(cp,.22);CA3.lookAt(target);
  CA3.aspect=innerWidth/innerHeight;CA3.updateProjectionMatrix();
  let pg=ACT3.get('p');if(!pg)pg=makeActor3('p',0xd4a84b);
  pg.position.set(P.x,0,P.y);pg.rotation.y=-(P.a||0);
