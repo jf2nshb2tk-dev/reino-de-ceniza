@@ -846,24 +846,46 @@ function buildTerrain3(){
  for(let i=0;i<34;i++){const a=i*Math.PI*2/34,r=430+(i%3)*22;box3(HX+Math.cos(a)*r,HY+Math.sin(a)*r,26,20,34,0x766756,a+Math.PI/4)}
 }
 function house3(x,z,w,d,c){
- box3(x,z,w,95,d,c);box3(x,z,w+14,12,d+14,0x30261f);
- const roof=cone3(x,z,Math.max(w,d)*.68,78,0x2b211c,4);roof.position.y=142;roof.rotation.y=Math.PI/4;roof.scale.z=.72;
- box3(x,z+d/2+.5,26,52,5,0x4a3023);
- for(const sx of [-w*.27,w*.27]){box3(x+sx,z-d/2-1,28,28,5,0x31546b);box3(x+sx,z-d/2-3,34,6,7,0xb18d54)}
- const chimney=box3(x+w*.28,z,15,65,15,0x4a3328);chimney.position.y=127;
+ const base=box3(x,z,w,72,d,c);
+ const roof=box3(x,z,w+18,10,d+18,0x30261f);
+ roof.position.y=76;
+ const upper=box3(x,z,w*.88,24,d*.88,0x5a493b);
+ upper.position.y=88;
+ const ridge=box3(x,z,w*.92,8,10,0x241b17);
+ ridge.position.y=105;
+ box3(x,z+d/2+2,30,45,6,0x3a261c);
+ for(const sx of [-w*.28,w*.28]){box3(x+sx,z-d/2-3,30,24,6,0x31546b);box3(x+sx,z-d/2-6,36,5,8,0xb18d54)}
+ box3(x+w*.28,z,13,45,13,0x4a3328).position.y=95;
 }
 function castle3(){
- box3(HX,HY-205,220,115,125,0x62594e);
- for(const sx of [-90,90]){cyl3(HX+sx,HY-205,38,210,0x70675a,8);const r=cone3(HX+sx,HY-205,52,90,0x30251f,8);r.position.y=255}
- const roof=cone3(HX,HY-205,105,72,0x30251f,4);roof.position.y=185;roof.rotation.y=Math.PI/4;
- box3(HX,HY-140,52,85,20,0x35261e);box3(HX,HY-207,180,12,15,0xb89b62);
- for(const sx of [-90,90])box3(HX+sx,HY-205,8,32,4,0x91c7d8);
+ const z=HY-250;
+ box3(HX,z,250,82,125,0x62594e);
+ for(const sx of [-105,105]){
+  const t=cyl3(HX+sx,z,32,150,0x70675a,8);t.position.y=75;
+  const r=cone3(HX+sx,z,43,58,0x30251f,8);r.position.y=179;
+ }
+ const gate=box3(HX,z+63,58,72,18,0x35261e);gate.position.y=36;
+ const wall=box3(HX,z-66,210,10,15,0xb89b62);wall.position.y=86;
 }
 function buildCity3(){
- house3(HX-285,HY-95,180,120,0x9d3932);house3(HX+285,HY-95,180,120,0x3f668e);house3(HX-270,HY+245,170,112,0x684978);house3(HX+270,HY+245,170,112,0x4c795b);castle3();
- const plaza=new THREE.Mesh(new THREE.CylinderGeometry(118,125,14,32),mat3(0x88755c));plaza.position.set(HX,31,HY);plaza.receiveShadow=true;GR3.add(plaza);
- const f=cyl3(HX,HY,35,75,0x8c8c82,12);f.position.y=68;const water=cyl3(HX,HY,25,5,0x3d8ca6,16);water.position.y=108;
- for(let i=0;i<4;i++){const a=i*Math.PI/2,x=HX+Math.cos(a)*150,z=HY+Math.sin(a)*150;cyl3(x,z,9,70,0x80663c,8);const l=cyl3(x,z,13,10,0xffc86b,8);l.position.y=74}
+ // Ciudad 3D limpia: plaza central, cuatro casas separadas y castillo al norte.
+ const cityGround=new THREE.Mesh(new THREE.CylinderGeometry(535,545,12,64),mat3(0x51483d));
+ cityGround.position.set(HX,5,HY);GR3.add(cityGround);
+ const plaza=new THREE.Mesh(new THREE.CylinderGeometry(155,160,10,40),mat3(0x88755c));
+ plaza.position.set(HX,16,HY);GR3.add(plaza);
+ // Casas en los cuatro cuadrantes, sin invadir calles.
+ house3(HX-300,HY-105,150,100,0x9d3932);
+ house3(HX+300,HY-105,150,100,0x3f668e);
+ house3(HX-285,HY+270,145,96,0x684978);
+ house3(HX+285,HY+270,145,96,0x4c795b);
+ castle3();
+ // Fuente central.
+ cyl3(HX,HY,34,55,0x8c8c82,12).position.y=43;
+ cyl3(HX,HY,25,5,0x3d8ca6,16).position.y=72;
+ // Faroles sobre la plaza.
+ for(let i=0;i<4;i++){const a=i*Math.PI/2,x=HX+Math.cos(a)*120,z=HY+Math.sin(a)*120;cyl3(x,z,7,45,0x80663c,8).position.y=22;const l=cyl3(x,z,11,8,0xffc86b,8);l.position.y=49;}
+ // Caminos desde la plaza hacia los cuatro biomas.
+ for(let i=0;i<4;i++){const a=i*Math.PI/2;const x=HX+Math.cos(a)*360,z=HY+Math.sin(a)*360;box3((HX+x)/2,HY,70,2,720,0x77664f,a-Math.PI/2);box3(HX,(HY+z)/2,720,2,70,0x77664f,a);}
 }
 function buildDecor3(){
  let seed=781;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
