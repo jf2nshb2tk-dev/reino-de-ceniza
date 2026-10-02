@@ -1,4 +1,4 @@
-const CACHE = "reino-ceniza-v3";
+const CACHE = "reino-ceniza-v4";
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -20,7 +20,7 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(cached => {
+    (new URL(event.request.url).origin !== self.location.origin ? fetch(event.request) : caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
         const copy = response.clone();
