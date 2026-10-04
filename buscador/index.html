@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Buscador La Costa</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#dbe3ef;--blue:#2563eb;--blue2:#1d4ed8;--danger:#b91c1c;--ok:#166534}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:980px;margin:auto;padding:18px 14px 42px}
+h1{margin:8px 0 4px;font-size:clamp(26px,7vw,38px)}
+.sub{margin:0 0 16px;color:var(--muted)}
+.panel,.card,.hint{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 12px rgba(15,23,42,.05)}
+.panel{padding:14px}.hint{padding:16px;color:var(--muted)}
+.row{display:flex;gap:8px}
+input{width:100%;font-size:17px;padding:15px 16px;border:1px solid var(--line);border-radius:14px;outline:none;background:#fff}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+button{border:0;border-radius:12px;padding:0 16px;min-height:50px;background:var(--blue);color:#fff;font-weight:750;font-size:14px}
+button:active{background:var(--blue2)}button.secondary{background:#334155}button:disabled{opacity:.55}
+.status{font-size:13px;color:var(--muted);margin-top:9px}.status.err{color:var(--danger);font-weight:700}.status.ok{color:var(--ok);font-weight:700}
+.topbar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.small{font-size:12px;color:var(--muted)}
+.search{display:none;position:sticky;top:0;z-index:20;background:rgba(244,246,250,.95);backdrop-filter:blur(8px);padding:10px 0 12px}
+.meta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;margin:8px 2px 0}
+#results{display:grid;gap:10px;margin-top:10px}
+.card{padding:14px}.name{font-size:18px;font-weight:850;margin-bottom:10px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.label{display:block;font-size:11px;text-transform:uppercase;color:var(--muted)}.value{font-size:14px;word-break:break-word}
+.empty{text-align:center;color:var(--muted);padding:30px}
+@media(min-width:720px){#results{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Buscador de Afiliados</h1>
+  <p class="sub">Distrito La Costa</p>
+
+  <div id="userbar" class="topbar">
+    <span class="small">Acceso autorizado</span>
+    <button id="logout" class="secondary" type="button">Cerrar sesión</button>
+  </div>
+
+  <section id="login" class="panel">
+    <div class="row">
+      <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password">
+      <button id="loginBtn" type="button">Entrar</button>
+    </div>
+    <div id="loginStatus" class="status">Ingresá la contraseña para habilitar el buscador.</div>
+  </section>
+
+  <section id="searchArea" class="search">
+    <div class="row">
+      <input id="q" type="search" autocomplete="off" placeholder="Buscar apellido, nombre o DNI…">
+      <button id="clear" class="secondary" type="button">Borrar</button>
+    </div>
+    <div class="meta"><span id="count">Escribí para buscar</span><span id="total"></span></div>
+  </section>
+
+  <div id="results"><div class="hint">Primero iniciá sesión.</div></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+  setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getDatabase, ref, get
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+import { firebaseConfig, LOGIN_EMAIL } from "./firebase-config.js";
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getDatabase(app);
+await setPersistence(auth,browserLocalPersistence);
+
+let DATA=[], INDEX=[];
+const $=id=>document.getElementById(id);
+const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
+function setLoggedInUI(active){
+  $("login").style.display=active?"none":"block";
+  $("userbar").style.display=active?"flex":"none";
+  $("searchArea").style.display=active?"block":"none";
+  if(!active){
+    DATA=[]; INDEX=[]; $("results").innerHTML='<div class="hint">Primero iniciá sesión.</div>';
+  }
+}
+
+async function loadData(){
+  $("results").innerHTML='<div class="hint">Cargando base de datos…</div>';
+  const snap=await get(ref(db,"afiliados"));
+  const val=snap.val()||{};
+  DATA=Object.values(val);
+  INDEX=DATA.map((r,i)=>({
+    i,
+    s:norm([r.apellido,r.nombre,r.matricula].join(" "))
+  }));
+  $("total").textContent=`${DATA.length.toLocaleString("es-AR")} registros`;
+  $("results").innerHTML='<div class="hint">Listo. Buscá por apellido, nombre o DNI/matrícula.</div>';
+  $("q").focus();
+}
+
+async function doLogin(){
+  const pw=$("password").value;
+  if(!pw)return;
+  $("loginBtn").disabled=true;
+  $("loginStatus").className="status";
+  $("loginStatus").textContent="Verificando…";
+  try{
+    await signInWithEmailAndPassword(auth,LOGIN_EMAIL,pw);
+    $("password").value="";
+  }catch(e){
+    console.error(e);
+    $("loginStatus").className="status err";
+    $("loginStatus").textContent="Contraseña incorrecta o acceso no configurado.";
+  }finally{
+    $("loginBtn").disabled=false;
+  }
+}
+
+onAuthStateChanged(auth, async user=>{
+  if(user){
+    setLoggedInUI(true);
+    try{ await loadData(); }
+    catch(e){
+      console.error(e);
+      $("results").innerHTML='<div class="hint">No se pudo leer la base. Revisá las reglas de Firebase.</div>';
+    }
+  }else setLoggedInUI(false);
+});
+
+$("loginBtn").addEventListener("click",doLogin);
+$("password").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+$("logout").addEventListener("click",()=>signOut(auth));
+
+function render(){
+  const query=norm($("q").value);
+  if(!query){
+    $("count").textContent="Escribí para buscar";
+    $("results").innerHTML='<div class="hint">Buscá por apellido, nombre o DNI/matrícula.</div>';
+    return;
+  }
+  const terms=query.split(/\s+/).filter(Boolean);
+  const ids=INDEX.filter(x=>terms.every(t=>x.s.includes(t))).map(x=>x.i);
+  $("count").textContent=`${ids.length} coincidencia${ids.length===1?"":"s"}`;
+  const shown=ids.slice(0,100);
+  if(!shown.length){
+    $("results").innerHTML='<div class="empty">No encontré coincidencias.</div>'; return;
+  }
+  $("results").innerHTML=shown.map(i=>{
+    const r=DATA[i];
+    return `<article class="card">
+      <div class="name">${esc(r.apellido)} · ${esc(r.nombre)}</div>
+      <div class="grid">
+        <div><span class="label">DNI / Matrícula</span><span class="value">${esc(r.matricula)}</span></div>
+        <div><span class="label">Nacimiento</span><span class="value">${esc(r.fechaNacimiento)}</span></div>
+        <div><span class="label">Género</span><span class="value">${esc(r.genero)}</span></div>
+        <div><span class="label">Tipo Doc.</span><span class="value">${esc(r.tipoDoc)}</span></div>
+        <div><span class="label">Sección</span><span class="value">${esc(r.seccion)}</span></div>
+        <div><span class="label">Cod. Sec.</span><span class="value">${esc(r.codSec)}</span></div>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+let timer;
+$("q").addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(render,50)});
+$("clear").addEventListener("click",()=>{$("q").value="";$("q").focus();render()});
+</script>
+</body>
+</html>
