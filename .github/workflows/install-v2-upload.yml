@@ -1,0 +1,72 @@
+name: Instalar Reino de Ceniza 5 Mapas v2
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/install-v2-upload.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Descomprimir y reemplazar juego
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="Reino_de_Ceniza_5_Mapas_v2.zip"
+          test -f "$ZIP"
+          rm -rf /tmp/reino-v2
+          mkdir -p /tmp/reino-v2
+          unzip -q "$ZIP" -d /tmp/reino-v2
+
+          INDEX="$(find /tmp/reino-v2 -type f -name index.html -print -quit)"
+          if [ -z "$INDEX" ]; then
+            echo "No se encontró index.html dentro del ZIP"
+            exit 1
+          fi
+          SRC="$(dirname "$INDEX")"
+          echo "Usando contenido desde: $SRC"
+
+          # Reemplazar solamente los archivos del juego, preservando workflows y la carpeta buscador.
+          rm -rf assets
+          rm -f index.html manifest.webmanifest sw.js
+          cp -a "$SRC"/. ./
+
+          test -f index.html
+          test -d assets
+
+          # Forzar una caché nueva en iPhone si el paquete trae service worker.
+          if [ -f sw.js ]; then
+            python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('sw.js')
+          s=p.read_text()
+          s=re.sub(r'reino-ceniza-v[^"\']+', 'reino-ceniza-v18', s, count=1)
+          p.write_text(s)
+          PY
+          fi
+
+          rm -f "$ZIP"
+          rm -f .github/workflows/install-v2-upload.yml
+
+      - name: Guardar versión v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Cargar Reino de Ceniza 5 Mapas v2"
+          git push origin HEAD:main
