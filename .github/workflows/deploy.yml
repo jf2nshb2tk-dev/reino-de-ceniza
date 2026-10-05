@@ -24,10 +24,121 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Corregir visual y optimizar mapas pesados
+      - name: Corregir visual y entrada a mapas pesados
         shell: bash
         run: |
-          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKcD1QYXRoKCdpbmRleC5odG1sJykKcz1wLnJlYWRfdGV4dCgpCgp2aXN1YWw9WwooIiAgaWYobWk9PT0xKXtcbiAgICBjb25zdCBpY2U9c3MoLjM4LC43OCxuMik7cj1sZXJwKC43MiwuOTIsaWNlKTtnPWxlcnAoLjc4LC45NSxpY2UpO2I9bGVycCguODIsMSxpY2UpO1xuICAgIGlmKG48LjI4KXtyKj0uNzI7Zyo9Ljc4O2IqPS44Mjt9XG4gIH1lbHNlIGlmKG1pPT09Mil7IiwKICIgIGlmKG1pPT09MSl7XG4gICAgY29uc3QgaWNlPXNzKC4zOCwuNzgsbjIpO3I9bGVycCguNDQsLjcwLGljZSk7Zz1sZXJwKC41MiwuNzgsaWNlKTtiPWxlcnAoLjYwLC44NixpY2UpO1xuICAgIGlmKG48LjMwKXtyKj0uNjg7Zyo9LjczO2IqPS43OTt9XG4gICAgaWYoaD40KXtjb25zdCBjYXA9Y2xhbXAoKGgtNCkvMTIsMCwuMDgpO3IrPWNhcDtnKz1jYXA7Yis9Y2FwO31cbiAgfWVsc2UgaWYobWk9PT0yKXsiKSwKKCIxOntmb2c6bmV3IFRIUkVFLkNvbG9yKDB4OWFhYmI3KSxoZW1pOm5ldyBUSFJFRS5Db2xvcigweGQ5ZWRmZiksdG9wOm5ldyBUSFJFRS5Db2xvcigweDMzNGI2OCksbmVhcjozOCxmYXI6MTMyLHN0YXI6LjE1fSwiLAogIjE6e2ZvZzpuZXcgVEhSRUUuQ29sb3IoMHg2MTc0ODcpLGhlbWk6bmV3IFRIUkVFLkNvbG9yKDB4YTliZmQyKSx0b3A6bmV3IFRIUkVFLkNvbG9yKDB4MWQzMTQ3KSxuZWFyOjQyLGZhcjoxMjgsc3RhcjouMDZ9LCIpLAooImZnLmNvbG9yLmxlcnAoQS5mb2csayk7c2NlbmUuYmFja2dyb3VuZC5jb3B5KGZnLmNvbG9yKTtmZy5uZWFyKz0oQS5uZWFyLWZnLm5lYXIpKms7ZmcuZmFyKz0oQS5mYXItZmcuZmFyKSprO2hlbWkuY29sb3IubGVycChBLmhlbWksayk7IiwKICJmZy5jb2xvci5sZXJwKEEuZm9nLGspO3NjZW5lLmJhY2tncm91bmQuY29weShmZy5jb2xvcik7ZmcubmVhcis9KEEubmVhci1mZy5uZWFyKSprO2ZnLmZhcis9KEEuZmFyLWZnLmZhcikqaztoZW1pLmNvbG9yLmxlcnAoQS5oZW1pLGspO2lmKGN1cnJlbnRNYXA9PT0xKXtoZW1pLmludGVuc2l0eSs9KC41OC1oZW1pLmludGVuc2l0eSkqaztpZihibG9vbSl7Ymxvb20uc3RyZW5ndGg9LjIyO2Jsb29tLnRocmVzaG9sZD0uOTtibG9vbS5yYWRpdXM9LjMyO319IiksCigiY29uc3Qgbm09TWF0aC5oeXBvdChQLngtTUVSQ0gueCxQLnotTUVSQ0gueik8NztlbHMuc2hvcC5oaWRkZW49IShubSYmIXBhbmVsT3BlbiYmIVAuZGVhZCk7IiwKICJjb25zdCBubT1jdXJyZW50TWFwPT09MCYmTWF0aC5oeXBvdChQLngtTUVSQ0gueCxQLnotTUVSQ0gueik8NztlbHMuc2hvcC5oaWRkZW49IShubSYmIXBhbmVsT3BlbiYmIVAuZGVhZCk7IikKXQpmb3Igb2xkLG5ldyBpbiB2aXN1YWw6CiAgICBpZiBvbGQgaW4gczoKICAgICAgICBzPXMucmVwbGFjZShvbGQsbmV3LDEpCgppZiAnbGV0IGhlYXZ5RW52UXVldWU9bnVsbDsnIG5vdCBpbiBzOgogICAgb2xkPSJmdW5jdGlvbiBwdXRFbnYobWksZyxwYXRoLHgseixzLHJ5LHRpbnQsY29sKXtjb25zdCBvPWNsb25lRW52KHBhdGgsdGludCk7by5wb3NpdGlvbi5zZXQoeCxtYXBMb2NhbEgobWkseCx6KSx6KTtvLnJvdGF0aW9uLnk9cnl8fDA7by5zY2FsZS5zZXRTY2FsYXIoc3x8MSk7Zy5hZGQobyk7aWYoY29sKWFkZE1hcENvbChtaSx4LHosY29sKihzfHwxKSk7cmV0dXJuIG87fSIKICAgIG5ldz0iIiJsZXQgaGVhdnlFbnZRdWV1ZT1udWxsOwpmdW5jdGlvbiBwdXRFbnZOb3cobWksZyxwYXRoLHgseixzLHJ5LHRpbnQsY29sKXtjb25zdCBvPWNsb25lRW52KHBhdGgsdGludCk7by5wb3NpdGlvbi5zZXQoeCxtYXBMb2NhbEgobWkseCx6KSx6KTtvLnJvdGF0aW9uLnk9cnl8fDA7by5zY2FsZS5zZXRTY2FsYXIoc3x8MSk7Zy5hZGQobyk7aWYoY29sKWFkZE1hcENvbChtaSx4LHosY29sKihzfHwxKSk7cmV0dXJuIG87fQpmdW5jdGlvbiBwdXRFbnYobWksZyxwYXRoLHgseixzLHJ5LHRpbnQsY29sKXtpZihoZWF2eUVudlF1ZXVlJiYobWk9PT0xfHxtaT09PTMpKXtoZWF2eUVudlF1ZXVlLnB1c2goW21pLGcscGF0aCx4LHoscyxyeSx0aW50LGNvbF0pO3JldHVybiBudWxsO31yZXR1cm4gcHV0RW52Tm93KG1pLGcscGF0aCx4LHoscyxyeSx0aW50LGNvbCk7fQpjb25zdCBtYXBZaWVsZD0oKT0+bmV3IFByb21pc2Uocj0+cmVxdWVzdEFuaW1hdGlvbkZyYW1lKCgpPT5yKCkpKTsKZnVuY3Rpb24gc2V0TWFwTG9hZFRleHQobWksbXNnKXtjb25zdCBlbD1kb2N1bWVudC5xdWVyeVNlbGVjdG9yKCcjbWFwTG9hZE5hbWUnKTtpZihlbCllbC50ZXh0Q29udGVudD1tc2d8fCgnVmlhamFuZG8gYSAnK0dBTUVfTUFQU1ttaV0ubmFtZSsn4oCmJyk7fSIiIgogICAgaWYgb2xkIG5vdCBpbiBzOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoJ05vIHNlIGVuY29udHLDsyBwdXRFbnYnKQogICAgcz1zLnJlcGxhY2Uob2xkLG5ldywxKQoKICAgIG9sZD0iYXN5bmMgZnVuY3Rpb24gcHJlcGFyZU1hcEFzc2V0cyhtaSl7Y29uc3QgcT1NQVBfUkVRW21pXTthd2FpdCBQcm9taXNlLmFsbChxLm1vbi5tYXAobmVlZE1vbnN0ZXIpLmNvbmNhdChxLmVudi5tYXAobmVlZEVudikpKTt9IgogICAgbmV3PSIiImFzeW5jIGZ1bmN0aW9uIHByZXBhcmVNYXBBc3NldHMobWkpewogIGNvbnN0IHE9TUFQX1JFUVttaV0saGVhdnk9bWk9PT0xfHxtaT09PTM7CiAgaWYoIWhlYXZ5KXthd2FpdCBQcm9taXNlLmFsbChxLm1vbi5tYXAobmVlZE1vbnN0ZXIpLmNvbmNhdChxLmVudi5tYXAobmVlZEVudikpKTtyZXR1cm47fQogIGNvbnN0IHRvdGFsPXEubW9uLmxlbmd0aCtxLmVudi5sZW5ndGg7bGV0IGRvbmU9MDsKICBmb3IoY29uc3QgbmFtZSBvZiBxLm1vbil7c2V0TWFwTG9hZFRleHQobWksJ0NhcmdhbmRvICcrR0FNRV9NQVBTW21pXS5uYW1lKycgwrcgbW9kZWxvcyAnKyhkb25lKzEpKycvJyt0b3RhbCk7YXdhaXQgbmVlZE1vbnN0ZXIobmFtZSk7ZG9uZSsrO2F3YWl0IG1hcFlpZWxkKCk7fQogIGZvcihjb25zdCBwYXRoIG9mIHEuZW52KXtzZXRNYXBMb2FkVGV4dChtaSwnQ2FyZ2FuZG8gJytHQU1FX01BUFNbbWldLm5hbWUrJyDCtyBlc2NlbmFyaW8gJysoZG9uZSsxKSsnLycrdG90YWwpO2F3YWl0IG5lZWRFbnYocGF0aCk7ZG9uZSsrO2F3YWl0IG1hcFlpZWxkKCk7fQp9IiIiCiAgICBpZiBvbGQgbm90IGluIHM6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgnTm8gc2UgZW5jb250csOzIHByZXBhcmVNYXBBc3NldHMnKQogICAgcz1zLnJlcGxhY2Uob2xkLG5ldywxKQoKICAgIGE9cy5pbmRleCgnZnVuY3Rpb24gc3Bhd25NYXBQb3B1bGF0aW9uKG1pKScpCiAgICBiPXMuaW5kZXgoJ2FzeW5jIGZ1bmN0aW9uIGVuc3VyZU1hcChtaSknLGEpCiAgICBuZXdfcG9wPSIiImFzeW5jIGZ1bmN0aW9uIHNwYXduTWFwUG9wdWxhdGlvbihtaSl7CiAgY29uc3QgUj1ybmdNYXAoNzAwMCttaSksam9icz1bXTsKICBjb25zdCBhZGQ9KC4uLmFyZ3MpPT5qb2JzLnB1c2goYXJncyk7CiAgZnVuY3Rpb24gd2F2ZSh0LG4sdGVzdCl7bGV0IGM9MCxrPTA7d2hpbGUoYzxuJiZrPG4qODApe2srKztjb25zdCB4PShSKCkqMi0xKSooTElNSVQtNyksej0oUigpKjItMSkqKExJTUlULTcpO2lmKE1hdGguaHlwb3QoeCx6LTYpPDIyfHx6PC01Nnx8IXRlc3QoeCx6KSljb250aW51ZTtpZihtaT09PTImJk1BUF9MQVZBWzJdLnNvbWUocD0+TWF0aC5oeXBvdCh4LXAueCxwLnopPHAucis0KSljb250aW51ZTthZGQodCx4LHosdW5kZWZpbmVkLG1pKTtjKys7fX0KICBpZihtaT09PTEpe3dhdmUoJ2Zyb3N0X29yYycsMTIsKCk9PnRydWUpO3dhdmUoJ2Zyb3N0X3RyaWJhbCcsMTAsKHgseik9Png8MzUpO3dhdmUoJ3lldGknLDcsKHgseik9Pk1hdGguYWJzKHgpPjI0fHx6PDApO2FkZCgneWV0aV9nbGFjaWFsJywtMjgsLTcyLDEyLG1pKTthZGQoJ3lldGlfYWxmYScsMjgsLTcyLDE0LG1pKTt9CiAgZWxzZSBpZihtaT09PTIpe3dhdmUoJ2Rpbm9fZmlyZScsMTEsKCk9PnRydWUpO3dhdmUoJ2FybWFiZWVfZmlyZScsMTEsKCk9PnRydWUpO3dhdmUoJ2dvbGVsaW5nX2ZpcmUnLDgsKHgseik9Pk1hdGguYWJzKHgpPjIwKTthZGQoJ2RyYWdvbl9hbmNpZW50JywtMzAsLTcyLDE2LG1pKTthZGQoJ2RyYWdvbl9ldm9sdmVkJywzMCwtNzIsMTgsbWkpO30KICBlbHNlIGlmKG1pPT09Myl7d2F2ZSgnZ2hvc3RfbW9iJywxNCwoKT0+dHJ1ZSk7d2F2ZSgnb3JjX3NrdWxsJywxMywoeCx6KT0+ejwzMCk7YWRkKCdnaG9zdF9za3VsbF9sb3JkJywtMjgsLTcyLDIwLG1pKTthZGQoJ3NrdWxsX3dhcmxvcmQnLDI4LC03MiwyMixtaSk7fQogIGVsc2V7d2F2ZSgncnVpbl9vcmMnLDEyLCgpPT50cnVlKTt3YXZlKCdtdXNocm9vbV9jb3JydXB0JywxMCwoeCx6KT0+eDwzNSk7d2F2ZSgnZ29sZW1fZ3VhcmQnLDksKHgseik9Pk1hdGguYWJzKHgpPjE4KTthZGQoJ2dvbGVtX2V2b2x2ZWRfYm9zcycsLTMwLC03MiwyNCxtaSk7YWRkKCdibHVlX2RlbW9uX2Jvc3MnLDMwLC03MiwyNixtaSk7fQogIGNvbnN0IGhlYXZ5PW1pPT09MXx8bWk9PT0zLGNodW5rPWhlYXZ5PzM6ODsKICBmb3IobGV0IGk9MDtpPGpvYnMubGVuZ3RoO2krKyl7CiAgICBzcGF3bkVuZW15KC4uLmpvYnNbaV0pOwogICAgaWYoKGkrMSklY2h1bms9PT0wKXtpZihoZWF2eSlzZXRNYXBMb2FkVGV4dChtaSwnUHJlcGFyYW5kbyBjcmlhdHVyYXMgJysoaSsxKSsnLycram9icy5sZW5ndGgpO2F3YWl0IG1hcFlpZWxkKCk7fQogIH0KfSIiIgogICAgIyBmaXggdHlwbyBwcmVzZXJ2aW5nIG9yaWdpbmFsIGxhdmEgY29uZGl0aW9uOyB3ZSdsbCByZXBsYWNlIGFmdGVyd2FyZAogICAgbmV3X3BvcD1uZXdfcG9wLnJlcGxhY2UoIk1hdGguaHlwb3QoeC1wLngscC56KSIsICJNYXRoLmh5cG90KHgtcC54LHotcC56KSIpCiAgICBzPXNbOmFdK25ld19wb3ArJ1xuJytzW2I6XQoKICAgIG9sZD0iYXN5bmMgZnVuY3Rpb24gZW5zdXJlTWFwKG1pKXtpZihtYXBCdWlsdFttaV0pcmV0dXJuO2F3YWl0IHByZXBhcmVNYXBBc3NldHMobWkpO2NvbnN0IGc9bmV3IFRIUkVFLkdyb3VwKCk7Zy5wb3NpdGlvbi55PU1BUF9ZW21pXTtnLnZpc2libGU9ZmFsc2U7c2NlbmUuYWRkKGcpO2NvbnN0IHRlcnI9bWFrZVRlcnJhaW4obWkpO2cuYWRkKHRlcnIpO21hcEdyb3Vwc1ttaV09ZzttYXBUZXJyYWluc1ttaV09dGVycjtidWlsZFNjZW5lcnkobWksZyk7c3Bhd25NYXBQb3B1bGF0aW9uKG1pKTttYXBCdWlsdFttaV09dHJ1ZTt9IgogICAgbmV3PSIiImFzeW5jIGZ1bmN0aW9uIGVuc3VyZU1hcChtaSl7CiAgaWYobWFwQnVpbHRbbWldKXJldHVybjsKICBhd2FpdCBwcmVwYXJlTWFwQXNzZXRzKG1pKTsKICBzZXRNYXBMb2FkVGV4dChtaSwnR2VuZXJhbmRvIHRlcnJlbm8gZGUgJytHQU1FX01BUFNbbWldLm5hbWUrJ+KApicpOwogIGF3YWl0IG1hcFlpZWxkKCk7CiAgY29uc3QgZz1uZXcgVEhSRUUuR3JvdXAoKTtnLnBvc2l0aW9uLnk9TUFQX1lbbWldO2cudmlzaWJsZT1mYWxzZTtzY2VuZS5hZGQoZyk7CiAgY29uc3QgdGVycj1tYWtlVGVycmFpbihtaSk7Zy5hZGQodGVycik7bWFwR3JvdXBzW21pXT1nO21hcFRlcnJhaW5zW21pXT10ZXJyOwogIGF3YWl0IG1hcFlpZWxkKCk7CiAgaWYobWk9PT0xfHxtaT09PTMpewogICAgaGVhdnlFbnZRdWV1ZT1bXTsKICAgIGJ1aWxkU2NlbmVyeShtaSxnKTsKICAgIGNvbnN0IGpvYnM9aGVhdnlFbnZRdWV1ZTtoZWF2eUVudlF1ZXVlPW51bGw7CiAgICBmb3IobGV0IGk9MDtpPGpvYnMubGVuZ3RoO2krKyl7CiAgICAgIHB1dEVudk5vdyguLi5qb2JzW2ldKTsKICAgICAgaWYoKGkrMSklND09PTApe3NldE1hcExvYWRUZXh0KG1pLCdBcm1hbmRvIGVzY2VuYXJpbyAnKyhpKzEpKycvJytqb2JzLmxlbmd0aCk7YXdhaXQgbWFwWWllbGQoKTt9CiAgICB9CiAgfWVsc2UgYnVpbGRTY2VuZXJ5KG1pLGcpOwogIGF3YWl0IHNwYXduTWFwUG9wdWxhdGlvbihtaSk7CiAgbWFwQnVpbHRbbWldPXRydWU7CiAgc2V0TWFwTG9hZFRleHQobWksJ0VudHJhbmRvIGEgJytHQU1FX01BUFNbbWldLm5hbWUrJ+KApicpOwogIGF3YWl0IG1hcFlpZWxkKCk7Cn0iIiIKICAgIGlmIG9sZCBub3QgaW4gczoKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KCdObyBzZSBlbmNvbnRyw7MgZW5zdXJlTWFwJykKICAgIHM9cy5yZXBsYWNlKG9sZCxuZXcsMSkKCiAgICBvbGQ9ImNvbnN0IHNlZz1pc1RvdWNoPzk2OjEyNixnZW89bmV3IFRIUkVFLlBsYW5lR2VvbWV0cnkoV09STEQsV09STEQsc2VnLHNlZyk7IgogICAgbmV3PSJjb25zdCBzZWc9aXNUb3VjaD8oKG1pPT09MXx8bWk9PT0zKT83Mjo4OCk6MTI2LGdlbz1uZXcgVEhSRUUuUGxhbmVHZW9tZXRyeShXT1JMRCxXT1JMRCxzZWcsc2VnKTsiCiAgICBpZiBvbGQgaW4gczoKICAgICAgICBzPXMucmVwbGFjZShvbGQsbmV3LDEpCgpwLndyaXRlX3RleHQocykK' | base64 -d | python3
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html')
+          s=p.read_text()
+
+          # Mantener la corrección visual de Montaña Helada y ocultar Herrero fuera del mapa 1.
+          visual=[
+            ("  if(mi===1){\n    const ice=ss(.38,.78,n2);r=lerp(.72,.92,ice);g=lerp(.78,.95,ice);b=lerp(.82,1,ice);\n    if(n<.28){r*=.72;g*=.78;b*=.82;}\n  }else if(mi===2){",
+             "  if(mi===1){\n    const ice=ss(.38,.78,n2);r=lerp(.44,.70,ice);g=lerp(.52,.78,ice);b=lerp(.60,.86,ice);\n    if(n<.30){r*=.68;g*=.73;b*=.79;}\n    if(h>4){const cap=clamp((h-4)/12,0,.08);r+=cap;g+=cap;b+=cap;}\n  }else if(mi===2){"),
+            ("1:{fog:new THREE.Color(0x9aabb7),hemi:new THREE.Color(0xd9edff),top:new THREE.Color(0x334b68),near:38,far:132,star:.15},",
+             "1:{fog:new THREE.Color(0x617487),hemi:new THREE.Color(0xa9bfd2),top:new THREE.Color(0x1d3147),near:42,far:128,star:.06},"),
+            ("fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);",
+             "fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);if(currentMap===1){hemi.intensity+=(.58-hemi.intensity)*k;if(bloom){bloom.strength=.22;bloom.threshold=.9;bloom.radius=.32;}}"),
+            ("const nm=Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);",
+             "const nm=currentMap===0&&Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);")
+          ]
+          for old,new in visual:
+              if old in s: s=s.replace(old,new,1)
+
+          # En móvil, nieve y muertos entran primero al terreno. Decoración y enemigos se transmiten después.
+          old="function putEnv(mi,g,path,x,z,s,ry,tint,col){const o=cloneEnv(path,tint);o.position.set(x,mapLocalH(mi,x,z),z);o.rotation.y=ry||0;o.scale.setScalar(s||1);g.add(o);if(col)addMapCol(mi,x,z,col*(s||1));return o;}"
+          new="""let heavyEnvQueue=null;
+const heavyHydration={};
+function putEnvNow(mi,g,path,x,z,s,ry,tint,col){const o=cloneEnv(path,tint);o.position.set(x,mapLocalH(mi,x,z),z);o.rotation.y=ry||0;o.scale.setScalar(s||1);g.add(o);if(col)addMapCol(mi,x,z,col*(s||1));return o;}
+function putEnv(mi,g,path,x,z,s,ry,tint,col){if(heavyEnvQueue&&(mi===1||mi===3)){heavyEnvQueue.push([mi,g,path,x,z,s,ry,tint,col]);return null;}return putEnvNow(mi,g,path,x,z,s,ry,tint,col);}
+const mapYield=()=>new Promise(r=>requestAnimationFrame(()=>r()));"""
+          if old not in s: raise SystemExit('No se encontró putEnv original')
+          s=s.replace(old,new,1)
+
+          # Menos vértices iniciales en los dos mapas pesados solamente en táctil.
+          old="const seg=isTouch?96:126,geo=new THREE.PlaneGeometry(WORLD,WORLD,seg,seg);"
+          new="const seg=isTouch?((mi===1||mi===3)?56:88):126,geo=new THREE.PlaneGeometry(WORLD,WORLD,seg,seg);"
+          if old in s: s=s.replace(old,new,1)
+
+          # Reemplazar población por una versión que también puede generarse por tandas.
+          a=s.index('function spawnMapPopulation(mi)')
+          b=s.index('async function ensureMap(mi)',a)
+          new_pop="""function makeMapPopulationJobs(mi){
+  const R=rngMap(7000+mi),jobs=[];
+  const add=(...args)=>jobs.push(args);
+  function wave(t,n,test){let c=0,k=0;while(c<n&&k<n*80){k++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<22||z<-56||!test(x,z))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+4))continue;add(t,x,z,undefined,mi);c++;}}
+  if(mi===1){wave('frost_orc',12,()=>true);wave('frost_tribal',10,(x,z)=>x<35);wave('yeti',7,(x,z)=>Math.abs(x)>24||z<0);add('yeti_glacial',-28,-72,12,mi);add('yeti_alfa',28,-72,14,mi);}
+  else if(mi===2){wave('dino_fire',11,()=>true);wave('armabee_fire',11,()=>true);wave('goleling_fire',8,(x,z)=>Math.abs(x)>20);add('dragon_ancient',-30,-72,16,mi);add('dragon_evolved',30,-72,18,mi);}
+  else if(mi===3){wave('ghost_mob',14,()=>true);wave('orc_skull',13,(x,z)=>z<30);add('ghost_skull_lord',-28,-72,20,mi);add('skull_warlord',28,-72,22,mi);}
+  else{wave('ruin_orc',12,()=>true);wave('mushroom_corrupt',10,(x,z)=>x<35);wave('golem_guard',9,(x,z)=>Math.abs(x)>18);add('golem_evolved_boss',-30,-72,24,mi);add('blue_demon_boss',30,-72,26,mi);}
+  return jobs;
+}
+function spawnMapPopulation(mi){for(const j of makeMapPopulationJobs(mi))spawnEnemy(...j);}
+async function streamMapPopulation(mi){
+  const jobs=makeMapPopulationJobs(mi);
+  for(let i=0;i<jobs.length;i++){
+    spawnEnemy(...jobs[i]);
+    const e=enemies[enemies.length-1];if(e&&e.map===mi)e.group.visible=(currentMap===mi);
+    await mapYield();
+  }
+}"""
+          s=s[:a]+new_pop+'\n'+s[b:]
+
+          old="async function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}"
+          new="""async function ensureMap(mi){
+  if(mapBuilt[mi])return;
+  const heavy=isTouch&&(mi===1||mi===3);
+  if(!heavy)await prepareMapAssets(mi);
+  await mapYield();
+  const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);
+  const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;
+  mapBuilt[mi]=true;
+  if(heavy)return;
+  buildScenery(mi,g);spawnMapPopulation(mi);
+}
+async function hydrateHeavyMap(mi){
+  if(!(isTouch&&(mi===1||mi===3)))return;
+  if(heavyHydration[mi])return heavyHydration[mi];
+  heavyHydration[mi]=(async()=>{
+    const q=MAP_REQ[mi],g=mapGroups[mi];
+    for(const name of q.mon){await needMonster(name);await mapYield();}
+    for(const path of q.env){await needEnv(path);await mapYield();}
+    heavyEnvQueue=[];buildScenery(mi,g);const jobs=heavyEnvQueue;heavyEnvQueue=null;
+    for(let i=0;i<jobs.length;i++){putEnvNow(...jobs[i]);await mapYield();}
+    await streamMapPopulation(mi);
+    if(currentMap===mi)toast(GAME_MAPS[mi].name+' listo','#8bd7a2');
+    return true;
+  })().catch(err=>{console.error(err);delete heavyHydration[mi];if(currentMap===mi)toast('No se pudieron terminar de cargar los detalles del mapa.','#e5655a');throw err;});
+  return heavyHydration[mi];
+}"""
+          if old not in s: raise SystemExit('No se encontró ensureMap original')
+          s=s.replace(old,new,1)
+
+          old="async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}"
+          new="""async function travelTo(mi){
+  if(mi===currentMap||state!=='play'||P.dead)return;
+  mapLoad(true,mi);
+  try{
+    await ensureMap(mi);
+    clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);
+    P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';
+    rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();
+    mapLoad(false,mi);
+    if(isTouch&&(mi===1||mi===3)){
+      toast('Entraste a '+GAME_MAPS[mi].name+' · cargando detalles…','#d9b36a');
+      hydrateHeavyMap(mi);
+    }else toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');
+  }catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}
+  finally{mapLoad(false,mi);}
+}"""
+          if old not in s: raise SystemExit('No se encontró travelTo original')
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
 
       - name: Validar JavaScript
         shell: bash
