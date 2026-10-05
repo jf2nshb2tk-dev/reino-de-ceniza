@@ -42,6 +42,9 @@ jobs:
       - name: Corregir velocidad del personaje
         run: python3 .github/scripts/speed_fix_patch.py
 
+      - name: Compactar inventario estilo MU
+        run: python3 .github/scripts/compact_inventory_patch.py
+
       - name: Reforzar carga de mapas pesados en iPhone
         run: python3 .github/scripts/heavy_map_stability_patch.py
 
