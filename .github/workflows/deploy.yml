@@ -27,6 +27,9 @@ jobs:
       - name: Aplicar ajustes para iPhone
         run: python3 .github/scripts/patch_game.py
 
+      - name: Aplicar progresión de niveles y drops
+        run: python3 .github/scripts/progression_patch.py
+
       - name: Validar JavaScript
         shell: bash
         run: |
@@ -52,5 +55,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-# redeploy: carga por etapas para mapas pesados
