@@ -30,6 +30,9 @@ jobs:
       - name: Aplicar progresión de niveles y drops
         run: python3 .github/scripts/progression_patch.py
 
+      - name: Aplicar reset MU y drop +15
+        run: python3 .github/scripts/reset_patch.py
+
       - name: Validar JavaScript
         shell: bash
         run: |
