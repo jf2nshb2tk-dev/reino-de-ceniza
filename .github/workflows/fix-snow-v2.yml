@@ -1,0 +1,25 @@
+name: Fix snow map
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-snow-v2.yml
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch
+        run: echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQpwPVBhdGgoJ2luZGV4Lmh0bWwnKQpzPXAucmVhZF90ZXh0KCkKcmVwbHM9WwooIiIiICBpZihtaT09PTEpe1xuICAgIGNvbnN0IGljZT1zcyguMzgsLjc4LG4yKTtyPWxlcnAoLjcyLC45MixpY2UpO2c9bGVycCguNzgsLjk1LGljZSk7Yj1sZXJwKC44MiwxLGljZSk7XG4gICAgaWYobjwuMjgpe3IqPS43MjtnKj0uNzg7Yio9LjgyO31cbiAgfWVsc2UgaWYobWk9PT0yKXsiIiIsCiIiIiAgaWYobWk9PT0xKXtcbiAgICAvLyBOaWV2ZSBhenVsLWdyaXM6IGNvbnNlcnZhIGNvbnRyYXN0ZSBhdW4gY29uIGJsb29tIHkgbmllYmxhIGVuIGlQaG9uZS5cbiAgICBjb25zdCBpY2U9c3MoLjM4LC43OCxuMik7cj1sZXJwKC40NCwuNzAsaWNlKTtnPWxlcnAoLjUyLC43OCxpY2UpO2I9bGVycCguNjAsLjg2LGljZSk7XG4gICAgaWYobjwuMzApe3IqPS42ODtnKj0uNzM7Yio9Ljc5O31cbiAgICBpZihoPjQpe2NvbnN0IGNhcD1jbGFtcCgoaC00KS8xMiwwLC4wOCk7cis9Y2FwO2crPWNhcDtiKz1jYXA7fVxuICB9ZWxzZSBpZihtaT09PTIpeyIiIiksCigiMTp7Zm9nOm5ldyBUSFJFRS5Db2xvcigweDlhYWJiNyksaGVtaTpuZXcgVEhSRUUuQ29sb3IoMHhkOWVkZmYpLHRvcDpuZXcgVEhSRUUuQ29sb3IoMHgzMzRiNjgpLG5lYXI6MzgsZmFyOjEzMixzdGFyOi4xNX0sIiwKICIxOntmb2c6bmV3IFRIUkVFLkNvbG9yKDB4NjE3NDg3KSxoZW1pOm5ldyBUSFJFRS5Db2xvcigweGE5YmZkMiksdG9wOm5ldyBUSFJFRS5Db2xvcigweDFkMzE0NyksbmVhcjo0MixmYXI6MTI4LHN0YXI6LjA2fSwiKSwKKCJmZy5jb2xvci5sZXJwKEEuZm9nLGspO3NjZW5lLmJhY2tncm91bmQuY29weShmZy5jb2xvcik7ZmcubmVhcis9KEEubmVhci1mZy5uZWFyKSprO2ZnLmZhcis9KEEuZmFyLWZnLmZhcikqaztoZW1pLmNvbG9yLmxlcnAoQS5oZW1pLGspOyIsCiAiZmcuY29sb3IubGVycChBLmZvZyxrKTtzY2VuZS5iYWNrZ3JvdW5kLmNvcHkoZmcuY29sb3IpO2ZnLm5lYXIrPShBLm5lYXItZmcubmVhcikqaztmZy5mYXIrPShBLmZhci1mZy5mYXIpKms7aGVtaS5jb2xvci5sZXJwKEEuaGVtaSxrKTtpZihjdXJyZW50TWFwPT09MSl7aGVtaS5pbnRlbnNpdHkrPSguNTgtaGVtaS5pbnRlbnNpdHkpKms7aWYoYmxvb20pe2Jsb29tLnN0cmVuZ3RoPS4yMjtibG9vbS50aHJlc2hvbGQ9Ljk7Ymxvb20ucmFkaXVzPS4zMjt9fSIpLAooImNvbnN0IG5tPU1hdGguaHlwb3QoUC54LU1FUkNILngsUC56LU1FUkNILnopPDc7ZWxzLnNob3AuaGlkZGVuPSEobm0mJiFwYW5lbE9wZW4mJiFQLmRlYWQpOyIsCiAiY29uc3Qgbm09Y3VycmVudE1hcD09PTAmJk1hdGguaHlwb3QoUC54LU1FUkNILngsUC56LU1FUkNILnopPDc7ZWxzLnNob3AuaGlkZGVuPSEobm0mJiFwYW5lbE9wZW4mJiFQLmRlYWQpOyIpXQpmb3Igb2xkLG5ldyBpbiByZXBsczoKICAgIGlmIG9sZCBub3QgaW4gczoKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KCdwYXR0ZXJuIG5vdCBmb3VuZDogJytvbGRbOjgwXSkKICAgIHM9cy5yZXBsYWNlKG9sZCxuZXcsMSkKcC53cml0ZV90ZXh0KHMpCnN3PVBhdGgoJ3N3LmpzJykKeD1zdy5yZWFkX3RleHQoKQp4PXJlLnN1YihyJ3JlaW5vLWNlbml6YS12XGQrJywgJ3JlaW5vLWNlbml6YS12MTUnLCB4LCBjb3VudD0xKQpzdy53cml0ZV90ZXh0KHgpCg==' | base64 -d | python3
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/fix-snow-v2.yml .github/workflows/fix-snow-visibility.yml
+          git add index.html sw.js .github/workflows/fix-snow-v2.yml .github/workflows/fix-snow-visibility.yml
+          git commit -m 'Fix snow map visibility'
+          git push origin HEAD:main
