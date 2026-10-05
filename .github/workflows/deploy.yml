@@ -33,6 +33,9 @@ jobs:
       - name: Aplicar reset MU y drop +15
         run: python3 .github/scripts/reset_patch.py
 
+      - name: Aplicar filtros de loot y venta por color
+        run: python3 .github/scripts/loot_filter_patch.py
+
       - name: Validar JavaScript
         shell: bash
         run: |
