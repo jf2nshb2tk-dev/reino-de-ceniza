@@ -24,6 +24,106 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Montaña Helada v17
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html')
+          s=p.read_text()
+
+          helpers='''
+function snowPathSlab(g,x,z,sx,sz,ry){
+  const m=new THREE.Mesh(UC,new THREE.MeshLambertMaterial({color:0x52697a,transparent:true,opacity:.72}));
+  m.scale.set(sx,.065,sz);m.rotation.y=ry||0;m.position.set(x,mapLocalH(1,x,z)+.04,z);m.receiveShadow=true;g.add(m);
+}
+function snowPath(g,pts,width){
+  for(let p=0;p<pts.length-1;p++){
+    const a=pts[p],b=pts[p+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(len/8)),ang=Math.atan2(dx,dz);
+    for(let i=0;i<steps;i++){const t=(i+.5)/steps;snowPathSlab(g,lerp(a[0],b[0],t),lerp(a[1],b[1],t),width,len/steps+.5,ang);}
+  }
+}
+function snowCluster(g,path,cx,cz,pts,s,tint,col){
+  for(let i=0;i<pts.length;i++){const q=pts[i];putEnv(1,g,path,cx+q[0],cz+q[1],s+(i%3)*.08,(i*.87)%TAU,tint,col||0);}
+}
+function snowCrystal(g,x,z,h,color){
+  const geo=new THREE.ConeGeometry(.55,h,5),mat=new THREE.MeshPhongMaterial({color:color,emissive:new THREE.Color(color).multiplyScalar(.08),shininess:10});
+  const m=new THREE.Mesh(geo,mat);m.position.set(x,mapLocalH(1,x,z)+h*.5,z);m.rotation.y=(x+z)*.17;g.add(m);
+}
+'''
+          if 'function snowPathSlab(' not in s:
+              i=s.index('function buildScenery(mi,g)')
+              s=s[:i]+helpers+'\n'+s[i:]
+
+          bs=s.index('function buildScenery(mi,g)')
+          a=s.index('  if(mi===1){',bs)
+          b=s.index('  }else if(mi===2){',a)
+          snow='''  if(mi===1){
+    // Ruta central, fortín y bifurcación a los dos Yetis.
+    snowPath(g,[[0,6],[0,-18],[0,-42]],4.6);
+    snowPath(g,[[0,-42],[-28,-72]],4.4);
+    snowPath(g,[[0,-42],[28,-72]],4.4);
+
+    // Bosques laterales: mantienen libre el camino principal.
+    const pineA=[[-10,-8],[-4,4],[6,-6],[11,5],[-13,10]];
+    const pineB=[[-9,-10],[-2,7],[7,-4],[12,9],[-12,3]];
+    snowCluster(g,'assets/nature/Pine_1.gltf',-53,27,pineA,.76,0xc2d5df,1.25);
+    snowCluster(g,'assets/nature/Pine_1.gltf',53,27,pineB,.76,0xc2d5df,1.25);
+    snowCluster(g,'assets/nature/Pine_1.gltf',-59,-27,pineB,.80,0xb7ccd8,1.25);
+    snowCluster(g,'assets/nature/Pine_1.gltf',59,-27,pineA,.80,0xb7ccd8,1.25);
+
+    // Cordones rocosos laterales, sin bloquear el recorrido.
+    const rocks=[[-7,-10],[4,-5],[10,7],[-11,8],[-2,13],[12,-14]];
+    snowCluster(g,'assets/nature/Rock_Medium_1.gltf',-75,-40,rocks,.72,0x879aa8,.85);
+    snowCluster(g,'assets/nature/Rock_Medium_1.gltf',75,-40,rocks,.72,0x879aa8,.85);
+
+    // Fortín central y dos pequeños campamentos de leveleo.
+    [-8,0,8].forEach(x=>putEnv(1,g,'assets/medieval/Wall_Arch.gltf',x,-25,1.18,0,0x9fb2bd,1.05));
+    for(let i=0;i<4;i++){
+      putEnv(1,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-27+i*4,25,1,0,0x9baab2,.72);
+      putEnv(1,g,'assets/medieval/Prop_WoodenFence_Single.gltf',15+i*4,25,1,0,0x9baab2,.72);
+    }
+
+    // Cristales marcan la entrada al fortín, la bifurcación y las arenas.
+    [[-12,-10],[12,-10],[-18,-45],[18,-45],[-33,-61],[33,-61]].forEach((q,i)=>snowCrystal(g,q[0],q[1],2.1+(i%2)*.55,i%2?0x83c9ef:0xa8ddf7));
+  }else if(mi===2){'''
+          s=s[:a]+snow+s[b+len('  }else if(mi===2){'):]
+
+          ps=s.index('function spawnMapPopulation(mi)')
+          a=s.index('  if(mi===1){',ps)
+          b=s.index('  else if(mi===2){',a)
+          pop='''  if(mi===1){
+    // Spots fijos: dos campamentos, dos zonas de Yetis y dos bosses.
+    const spot=(t,cx,cz,n,rx,rz)=>{for(let i=0;i<n;i++){const ang=i/n*TAU+(R()-.5)*.35,rr=.45+R()*.45;spawnEnemy(t,cx+Math.cos(ang)*rx*rr,cz+Math.sin(ang)*rz*rr,undefined,mi);}};
+    spot('frost_orc',-31,28,4,9,7);spot('frost_orc',31,28,4,9,7);
+    spot('frost_tribal',-31,-10,4,9,8);spot('frost_tribal',31,-10,4,9,8);
+    spot('yeti',-51,-43,2,7,6);spot('yeti',51,-43,2,7,6);spawnEnemy('yeti',0,-51,undefined,mi);
+    spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);
+  }
+  else if(mi===2){'''
+          s=s[:a]+pop+s[b+len('  else if(mi===2){'):]
+          p.write_text(s)
+
+          sw=Path('sw.js')
+          x=sw.read_text()
+          x=re.sub(r'reino-ceniza-v\d+','reino-ceniza-v17',x,count=1)
+          sw.write_text(x)
+          PY
+
+      - name: Validar JavaScript
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          blocks=re.findall(r'<script>([\s\S]*?)</script>',s)
+          Path('/tmp/game.js').write_text(blocks[-1])
+          PY
+          node --check /tmp/game.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
