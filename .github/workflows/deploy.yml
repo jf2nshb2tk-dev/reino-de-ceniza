@@ -24,39 +24,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Corregir visibilidad de Montaña Helada
+      - name: Corregir nieve y Herrero
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-
-          replacements=[
-          ("""  if(mi===1){
-    const ice=ss(.38,.78,n2);r=lerp(.72,.92,ice);g=lerp(.78,.95,ice);b=lerp(.82,1,ice);
-    if(n<.28){r*=.72;g*=.78;b*=.82;}
-  }else if(mi===2){""",
-           """  if(mi===1){
-    const ice=ss(.38,.78,n2);r=lerp(.44,.70,ice);g=lerp(.52,.78,ice);b=lerp(.60,.86,ice);
-    if(n<.30){r*=.68;g*=.73;b*=.79;}
-    if(h>4){const cap=clamp((h-4)/12,0,.08);r+=cap;g+=cap;b+=cap;}
-  }else if(mi===2){"""),
-          ("1:{fog:new THREE.Color(0x9aabb7),hemi:new THREE.Color(0xd9edff),top:new THREE.Color(0x334b68),near:38,far:132,star:.15},",
-           "1:{fog:new THREE.Color(0x617487),hemi:new THREE.Color(0xa9bfd2),top:new THREE.Color(0x1d3147),near:42,far:128,star:.06},"),
-          ("fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);",
-           "fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);if(currentMap===1){hemi.intensity+=(.58-hemi.intensity)*k;if(bloom){bloom.strength=.22;bloom.threshold=.9;bloom.radius=.32;}}"),
-          ("const nm=Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);",
-           "const nm=currentMap===0&&Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);")
-          ]
-
-          for old,new in replacements:
-              if old in s:
-                  s=s.replace(old,new,1)
-                  print('patched')
-              else:
-                  print('pattern not found; left unchanged')
-
+          old="  if(mi===1){\n    const ice=ss(.38,.78,n2);r=lerp(.72,.92,ice);g=lerp(.78,.95,ice);b=lerp(.82,1,ice);\n    if(n<.28){r*=.72;g*=.78;b*=.82;}\n  }else if(mi===2){"
+          new="  if(mi===1){\n    const ice=ss(.38,.78,n2);r=lerp(.44,.70,ice);g=lerp(.52,.78,ice);b=lerp(.60,.86,ice);\n    if(n<.30){r*=.68;g*=.73;b*=.79;}\n    if(h>4){const cap=clamp((h-4)/12,0,.08);r+=cap;g+=cap;b+=cap;}\n  }else if(mi===2){"
+          if old in s: s=s.replace(old,new,1)
+          old="1:{fog:new THREE.Color(0x9aabb7),hemi:new THREE.Color(0xd9edff),top:new THREE.Color(0x334b68),near:38,far:132,star:.15},"
+          new="1:{fog:new THREE.Color(0x617487),hemi:new THREE.Color(0xa9bfd2),top:new THREE.Color(0x1d3147),near:42,far:128,star:.06},"
+          if old in s: s=s.replace(old,new,1)
+          old="fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);"
+          new="fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);if(currentMap===1){hemi.intensity+=(.58-hemi.intensity)*k;if(bloom){bloom.strength=.22;bloom.threshold=.9;bloom.radius=.32;}}"
+          if old in s: s=s.replace(old,new,1)
+          old="const nm=Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);"
+          new="const nm=currentMap===0&&Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);"
+          if old in s: s=s.replace(old,new,1)
           p.write_text(s)
           PY
 
