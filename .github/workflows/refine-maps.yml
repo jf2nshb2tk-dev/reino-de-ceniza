@@ -1,0 +1,56 @@
+name: Refinar mapas secundarios
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/refine-maps.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "refine-maps"
+  cancel-in-progress: true
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Aplicar rediseño
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64, zlib
+          payload = '''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'''
+          code = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
+          exec(compile(code, 'refine_maps.py', 'exec'))
+          PY
+
+      - name: Validar JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          blocks=re.findall(r'<script(?: [^>]*)?>(.*?)</script>',s,re.S)
+          Path('/tmp/check.js').write_text('\n'.join(b for b in blocks if b.strip()))
+          PY
+          node --check /tmp/check.js
+
+      - name: Guardar cambios
+        shell: bash
+        run: |
+          rm -f .github/workflows/refine-maps.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Rediseñar mapas secundarios y corregir nieve"
+          git push origin HEAD:main
