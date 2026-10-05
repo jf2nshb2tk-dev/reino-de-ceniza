@@ -1,0 +1,29 @@
+name: Diagnosticar mapas pesados
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/diag-heavy-maps.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Mostrar bloques relevantes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          for key in ['function buildScenery(mi,g)','function spawnMapPopulation(mi)','async function','function travel','function enterMap','function putEnv','const MAPS','mapGroups']:
+              i=s.find(key)
+              if i>=0:
+                  print('\n===== '+key+' =====')
+                  print(s[i:i+12000])
+          print('\n===== COUNTS =====')
+          for token in ['putEnv(1,','putEnv(3,','spawnEnemy(','gltf','loadAsync(','GLTFLoader']:
+              print(token, s.count(token))
+          PY
