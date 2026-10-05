@@ -2456,9 +2456,8 @@ function mapColor(mi,x,z,h,out){
   const n=vnoise(x*.22,z*.22),n2=vnoise(x*.58+33,z*.58-17),hs=clamp(1+h*.025,.7,1.3);
   let r=.3,g=.3,b=.3;
   if(mi===1){
-    const ice=ss(.36,.8,n2);r=lerp(.52,.78,ice);g=lerp(.61,.84,ice);b=lerp(.69,.91,ice);
-    if(n<.3){r*=.74;g*=.79;b*=.84;}
-    if(h>4){const cap=clamp((h-4)/8,0,.18);r+=cap;g+=cap;b+=cap;}
+    const ice=ss(.38,.78,n2);r=lerp(.72,.92,ice);g=lerp(.78,.95,ice);b=lerp(.82,1,ice);
+    if(n<.28){r*=.72;g*=.78;b*=.82;}
   }else if(mi===2){
     const crack=Math.abs(n2-.5)<.055;r=.17+.1*n;g=.13+.05*n;b=.13+.045*n;if(crack){r=.72;g=.18+.12*n;b=.055;}
   }else if(mi===3){
@@ -2478,23 +2477,15 @@ resolve=function(e,r){
 };
 
 const MAP_ATM={
-  1:{fog:new THREE.Color(0x6e7f8e),hemi:new THREE.Color(0xc2d8e7),ground:new THREE.Color(0x4a5866),top:new THREE.Color(0x203141),near:44,far:138,star:.08,intensity:.72},
-  2:{fog:new THREE.Color(0x351612),hemi:new THREE.Color(0xc06a49),ground:new THREE.Color(0x2d1714),top:new THREE.Color(0x120504),near:34,far:122,star:.14,intensity:.72},
-  3:{fog:new THREE.Color(0x242532),hemi:new THREE.Color(0x85889d),ground:new THREE.Color(0x1c1e28),top:new THREE.Color(0x080914),near:34,far:116,star:.8,intensity:.67},
-  4:{fog:new THREE.Color(0x293126),hemi:new THREE.Color(0x969783),ground:new THREE.Color(0x20261d),top:new THREE.Color(0x0d110d),near:38,far:126,star:.34,intensity:.7}
+  1:{fog:new THREE.Color(0x9aabb7),hemi:new THREE.Color(0xd9edff),top:new THREE.Color(0x334b68),near:38,far:132,star:.15},
+  2:{fog:new THREE.Color(0x3b1712),hemi:new THREE.Color(0xd07a54),top:new THREE.Color(0x160706),near:30,far:118,star:.18},
+  3:{fog:new THREE.Color(0x252535),hemi:new THREE.Color(0x8f91ad),top:new THREE.Color(0x080914),near:31,far:112,star:.95},
+  4:{fog:new THREE.Color(0x293027),hemi:new THREE.Color(0xa4a38d),top:new THREE.Color(0x10120f),near:35,far:122,star:.45}
 };
-function mapFx(mi){
-  if(!bloom||!fxOn)return;
-  const normal=Q===2?.75:.55;
-  if(mi===1){bloom.strength=.24;bloom.threshold=.9;bloom.radius=.35;}
-  else{bloom.strength=normal;bloom.threshold=.68;bloom.radius=.55;}
-}
 atmoUpdate=function(dt){
-  if(currentMap===0){mapFx(0);_atmo0(dt);return;}
+  if(currentMap===0){_atmo0(dt);return;}
   const A=MAP_ATM[currentMap],k=Math.min(1,dt*1.7),fg=scene.fog;
-  mapFx(currentMap);
-  fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;
-  hemi.color.lerp(A.hemi,k);if(hemi.groundColor&&A.ground)hemi.groundColor.lerp(A.ground,k);hemi.intensity+=(A.intensity-hemi.intensity)*k;
+  fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);
   SKY_U.uHor.value.copy(fg.color);SKY_U.uTop.value.lerp(A.top,k);SKY_U.uStar.value+=(A.star-SKY_U.uStar.value)*k;SKY_U.uT.value=T;WIND.value=T;skyMesh.position.copy(camera.position);LAVA_U.uT.value=T;
   lavaAcc+=dt*(Q===0?3:Q===1?7:11);const pools=MAP_LAVA[currentMap]||[];
   while(lavaAcc>1){lavaAcc-=1;if(!pools.length)continue;const p=pools[(Math.random()*pools.length)|0];if(Math.hypot(p.x-P.x,p.z-P.z)>75)continue;const a=Math.random()*TAU,r=Math.sqrt(Math.random())*p.r*.9;fxp.emit(p.x+Math.cos(a)*r,MAP_Y[currentMap]+.35,p.z+Math.sin(a)*r,rnd(-.5,.5),rnd(1.4,3.2),rnd(-.5,.5),rnd(1.1,2.2),rnd(.12,.24),[1,rnd(.35,.6),.12],-.4);}
@@ -2610,16 +2601,7 @@ function rngMap(seed){let a=seed|0;return ()=>{a=(Math.imul(a,1664525)+101390422
 function makePortalShrine(mi,g){const y=mapLocalH(mi,0,6),m=new THREE.MeshPhongMaterial({color:mi===1?0xbfdfff:mi===2?0x6b3028:mi===3?0x625777:0x59664e,emissive:mi===2?0x431008:0x101018});for(let i=0;i<6;i++){const a=i/6*TAU,x=Math.cos(a)*5,z=6+Math.sin(a)*5;const p=new THREE.Mesh(UC,m);p.scale.set(.7,4,.7);p.position.set(x,mapLocalH(mi,x,z)+2,z);g.add(p);addMapCol(mi,x,z,.65);}const ring=new THREE.Mesh(new THREE.TorusGeometry(2.2,.12,8,40),new THREE.MeshBasicMaterial({color:GAME_MAPS[mi].color,transparent:true,opacity:.78}));ring.position.set(0,y+.15,6);ring.rotation.x=Math.PI/2;g.add(ring);}
 function makeBossArena(mi,g,bp,tint){const y=mapLocalH(mi,bp.x,bp.z);for(let i=0;i<8;i++){const a=i/8*TAU,x=bp.x+Math.cos(a)*10.5,z=bp.z+Math.sin(a)*10.5;const p=new THREE.Mesh(UC,new THREE.MeshPhongMaterial({color:tint||0x62584f}));p.scale.set(.55,2.8,.55);p.position.set(x,mapLocalH(mi,x,z)+1.4,z);g.add(p);addMapCol(mi,x,z,.5);}const r=new THREE.Mesh(new THREE.RingGeometry(8.6,9.2,48),new THREE.MeshBasicMaterial({color:GAME_MAPS[mi].color,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false}));r.rotation.x=-Math.PI/2;r.position.set(bp.x,y+.08,bp.z);g.add(r);}
 function makeLavaPools(g){MAP_LAVA[2].forEach(p=>{const m=makeLava(),d=new THREE.Mesh(DISC,m);d.rotation.x=-Math.PI/2;d.scale.set(p.r+1.1,p.r+1.1,1);d.position.set(p.x,mapLocalH(2,p.x,p.z)+.18,p.z);g.add(d);const glow=new THREE.PointLight(0xff5820,.8,20,2);glow.position.set(p.x,mapLocalH(2,p.x,p.z)+2,p.z);g.add(glow);});}
-function makeTerrain(mi){
-  const seg=isTouch?96:126,geo=new THREE.PlaneGeometry(WORLD,WORLD,seg,seg);geo.rotateX(-Math.PI/2);
-  const pa=geo.attributes.position,ca=new Float32Array(pa.count*3),tc=new THREE.Color();
-  for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),h=mapLocalH(mi,x,z);pa.setY(i,h);mapColor(mi,x,z,h,tc);ca[i*3]=tc.r;ca[i*3+1]=tc.g;ca[i*3+2]=tc.b;}
-  geo.setAttribute('color',new THREE.BufferAttribute(ca,3));geo.computeVertexNormals();
-  const material=mi===1
-    ?new THREE.MeshLambertMaterial({vertexColors:true,color:0xdbe8ef})
-    :new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000,map:groundTex,bumpMap:groundTex,bumpScale:.7});
-  const me=new THREE.Mesh(geo,material);me.receiveShadow=true;return me;
-}
+function makeTerrain(mi){const seg=isTouch?96:126,geo=new THREE.PlaneGeometry(WORLD,WORLD,seg,seg);geo.rotateX(-Math.PI/2);const pa=geo.attributes.position,ca=new Float32Array(pa.count*3),tc=new THREE.Color();for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),h=mapLocalH(mi,x,z);pa.setY(i,h);mapColor(mi,x,z,h,tc);ca[i*3]=tc.r;ca[i*3+1]=tc.g;ca[i*3+2]=tc.b;}geo.setAttribute('color',new THREE.BufferAttribute(ca,3));geo.computeVertexNormals();const me=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000,map:groundTex,bumpMap:groundTex,bumpScale:mi===1?.35:.7}));me.receiveShadow=true;return me;}
 
 const MAP_REQ={
   1:{mon:['Orc','Tribal','Yeti'],env:['assets/nature/Pine_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/medieval/Wall_Arch.gltf','assets/medieval/Prop_WoodenFence_Single.gltf']},
@@ -2628,135 +2610,24 @@ const MAP_REQ={
   4:{mon:['Orc','MushroomKing','Goleling','Goleling_Evolved','BlueDemon'],env:['assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf','assets/medieval/Stairs_Exterior_SingleSide.gltf','assets/medieval/Prop_WoodenFence_Single.gltf','assets/dungeon/pillar.gltf']}
 };
 async function prepareMapAssets(mi){const q=MAP_REQ[mi];await Promise.all(q.mon.map(needMonster).concat(q.env.map(needEnv)));}
-function pathSlab(mi,g,x,z,sx,sz,color,ry){
-  const m=new THREE.Mesh(UC,new THREE.MeshLambertMaterial({color:color,transparent:true,opacity:.84,depthWrite:true}));
-  m.scale.set(sx,.08,sz);m.rotation.y=ry||0;m.position.set(x,mapLocalH(mi,x,z)+.045,z);m.receiveShadow=true;g.add(m);return m;
+function scatter(mi,g,path,n,seed,opt){const R=rngMap(seed),bs=MAP_BOSSES[mi]||[];let c=0,t=0;while(c<n&&t<n*30){t++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<16||bs.some(b=>Math.hypot(x-b.x,z-b.z)<14))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+3))continue;putEnv(mi,g,path,x,z,(opt.s0||.7)+R()*(opt.s1||.4),R()*TAU,opt.tint,opt.col||0);c++;}}
+function buildScenery(mi,g){makePortalShrine(mi,g);(MAP_BOSSES[mi]||[]).forEach(b=>makeBossArena(mi,g,b,mi===1?0x8ea4b0:mi===2?0x55332c:mi===3?0x555063:0x5b5b4c));
+  if(mi===1){scatter(mi,g,'assets/nature/Pine_1.gltf',28,1101,{s0:.72,s1:.45,tint:0xe5f3ff,col:1.5});scatter(mi,g,'assets/nature/Rock_Medium_1.gltf',25,1102,{s0:.7,s1:.8,tint:0xc7d7e0,col:1});for(let i=0;i<7;i++){const x=-60+i*20,z=-24+(i%2)*10;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.2,i%2?Math.PI/2:0,0xb8c7d0,1.3);}for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-14+i*4,30,1,0,0xd5e1e7,.9);
+  }else if(mi===2){scatter(mi,g,'assets/nature/DeadTree_1.gltf',16,2201,{s0:.55,s1:.45,tint:0x5a332a,col:1.3});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',34,2202,{s0:.8,s1:1.2,tint:0x4d342f,col:1});for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',-70+i*20,-42+(i%2)*9,1.25,i%2?Math.PI/2:0,0x6a4034,1.3);makeLavaPools(g);
+  }else if(mi===3){scatter(mi,g,'assets/nature/DeadTree_1.gltf',18,3301,{s0:.5,s1:.35,tint:0x667064,col:1.2});for(let i=0;i<10;i++){const x=-52+(i%5)*26,z=-14-Math.floor(i/5)*24;putEnv(mi,g,'assets/dungeon/wall_corner.gltf',x,z,1.15,(i%4)*Math.PI/2,0x777485,1.3);}for(let i=0;i<12;i++){const x=-65+(i%6)*26,z=-47+(i%2)*10;putEnv(mi,g,'assets/dungeon/pillar.gltf',x,z,1.1,0,0x79768a,.8);}putEnv(mi,g,'assets/dungeon/stairs_long.gltf',0,-44,1.1,0,0x777487,2.2);putEnv(mi,g,'assets/dungeon/floor_tile_extralarge_grates.gltf',0,-60,2.6,0,0x6d687b,0);for(let i=0;i<6;i++)putEnv(mi,g,'assets/dungeon/barrel_large_decorated.gltf',-12+i*4,26,0.75,i,0x6f604f,.7);
+  }else{scatter(mi,g,'assets/nature/TwistedTree_4.gltf',17,4401,{s0:.42,s1:.28,tint:0x6d805d,col:1.8});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',24,4402,{s0:.75,s1:.8,tint:0x777568,col:1});for(let i=0;i<9;i++){const x=-64+(i%5)*30,z=-28+Math.floor(i/5)*22;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.25,(i%4)*Math.PI/2,0x8d806a,1.3);}for(let i=0;i<10;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-34+i*7,42+(i%2)*5,1,0,0x675c4a,.9);for(let i=0;i<8;i++)putEnv(mi,g,'assets/dungeon/pillar.gltf',-49+i*14,-52,1,0,0x6d6a5b,.8);putEnv(mi,g,'assets/medieval/Stairs_Exterior_SingleSide.gltf',0,-45,2.8,0,0x82745d,1.2);}
 }
-function pathRoute(mi,g,pts,width,color){
-  for(let p=0;p<pts.length-1;p++){
-    const a=pts[p],b=pts[p+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(len/6.5)),ang=Math.atan2(dx,dz);
-    for(let i=0;i<steps;i++){const t=(i+.5)/steps,x=lerp(a[0],b[0],t),z=lerp(a[1],b[1],t);pathSlab(mi,g,x,z,width,len/steps+.7,color,ang);}
-  }
-}
-function mapBlock(mi,g,x,z,sx,sy,sz,color,ry,col,emissive){
-  const m=new THREE.Mesh(UC,new THREE.MeshPhongMaterial({color:color,emissive:emissive||0,shininess:0}));
-  m.scale.set(sx,sy,sz);m.rotation.y=ry||0;m.position.set(x,mapLocalH(mi,x,z)+sy*.5,z);m.castShadow=Q>0;m.receiveShadow=true;g.add(m);if(col)addMapCol(mi,x,z,col);return m;
-}
-function mapCrystal(mi,g,x,z,s,h,color){
-  const m=new THREE.Mesh(UCone,new THREE.MeshPhongMaterial({color:color,emissive:new THREE.Color(color).multiplyScalar(.09),shininess:12}));
-  m.scale.set(s,h,s);m.position.set(x,mapLocalH(mi,x,z)+h*.5,z);m.rotation.y=(x*13+z*7)%TAU;m.castShadow=Q>0;g.add(m);addMapCol(mi,x,z,s*.45);return m;
-}
-function envCluster(mi,g,path,cx,cz,n,rx,rz,seed,opt){
-  const R=rngMap(seed),bs=MAP_BOSSES[mi]||[];let made=0,tries=0;
-  while(made<n&&tries<n*30){tries++;const a=R()*TAU,rr=Math.sqrt(R()),x=cx+Math.cos(a)*rx*rr,z=cz+Math.sin(a)*rz*rr;
-    if(Math.hypot(x,z-6)<14||bs.some(b=>Math.hypot(x-b.x,z-b.z)<13))continue;
-    if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+2.6))continue;
-    putEnv(mi,g,path,x,z,(opt.s0||.7)+R()*(opt.s1||.35),R()*TAU,opt.tint,opt.col||0);made++;
-  }
-}
-function envLine(mi,g,path,a,b,count,opt){
-  for(let i=0;i<count;i++){const t=count===1?.5:i/(count-1),x=lerp(a[0],b[0],t),z=lerp(a[1],b[1],t);putEnv(mi,g,path,x,z,opt.s||1,(opt.ry||0)+(i%2?Math.PI:0),opt.tint,opt.col||0);}
-}
-function buildScenery(mi,g){
-  makePortalShrine(mi,g);
-  (MAP_BOSSES[mi]||[]).forEach(b=>makeBossArena(mi,g,b,mi===1?0x738b9d:mi===2?0x513029:mi===3?0x4f4a60:0x555848));
-
-  if(mi===1){
-    // Montaña Helada: camino legible, bosque lateral y fortín antes de la bifurcación de bosses.
-    pathRoute(mi,g,[[0,6],[0,-18],[0,-40],[-28,-72]],4.8,0x63788a);
-    pathRoute(mi,g,[[0,-40],[28,-72]],4.8,0x63788a);
-    envCluster(mi,g,'assets/nature/Pine_1.gltf',-58,30,16,22,24,1111,{s0:.78,s1:.38,tint:0xc8dbe7,col:1.3});
-    envCluster(mi,g,'assets/nature/Pine_1.gltf',58,30,16,22,24,1112,{s0:.78,s1:.38,tint:0xc8dbe7,col:1.3});
-    envCluster(mi,g,'assets/nature/Pine_1.gltf',-64,-24,14,20,25,1113,{s0:.8,s1:.42,tint:0xbfd3df,col:1.3});
-    envCluster(mi,g,'assets/nature/Pine_1.gltf',64,-24,14,20,25,1114,{s0:.8,s1:.42,tint:0xbfd3df,col:1.3});
-    envCluster(mi,g,'assets/nature/Rock_Medium_1.gltf',-76,-54,12,18,25,1121,{s0:.82,s1:.72,tint:0x91a4b1,col:.9});
-    envCluster(mi,g,'assets/nature/Rock_Medium_1.gltf',76,-54,12,18,25,1122,{s0:.82,s1:.72,tint:0x91a4b1,col:.9});
-    // Puerta helada y dos campamentos laterales.
-    [-8,0,8].forEach((x,i)=>putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,-22,1.22,0,0xaebfca,1.15));
-    for(let i=0;i<7;i++){putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-28+i*4,25,1,0,0xa8b7bf,.75);putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',4+i*4,25,1,0,0xa8b7bf,.75);}
-    [[-15,-9],[-10,-12],[15,-9],[10,-12],[-20,-43],[20,-43]].forEach((q,i)=>mapCrystal(mi,g,q[0],q[1],.55+(i%2)*.15,2.6+(i%3)*.5,i%2?0x9bd8ff:0xb7e6ff));
-    // Murallas de nieve en los bordes para que el mapa se sienta cerrado, no vacío.
-    for(let z=62;z>=-72;z-=18){mapBlock(mi,g,-88,z,7,3.2,10,0x718493,.15,2.8);mapBlock(mi,g,88,z,7,3.2,10,0x718493,-.15,2.8);}
-  }else if(mi===2){
-    // Valle de los Dragones: ruta de basalto entre dos paredes rocosas, lava como obstáculos claros.
-    pathRoute(mi,g,[[0,6],[0,-20],[0,-43],[-30,-72]],4.6,0x2d2523);
-    pathRoute(mi,g,[[0,-43],[30,-72]],4.6,0x2d2523);
-    makeLavaPools(g);
-    envCluster(mi,g,'assets/nature/Rock_Medium_3.gltf',-58,22,18,22,28,2211,{s0:.95,s1:1.0,tint:0x4b302c,col:1});
-    envCluster(mi,g,'assets/nature/Rock_Medium_3.gltf',58,22,18,22,28,2212,{s0:.95,s1:1.0,tint:0x4b302c,col:1});
-    envCluster(mi,g,'assets/nature/Rock_Medium_1.gltf',-62,-34,18,24,28,2213,{s0:.9,s1:1.1,tint:0x432a27,col:1});
-    envCluster(mi,g,'assets/nature/Rock_Medium_1.gltf',62,-34,18,24,28,2214,{s0:.9,s1:1.1,tint:0x432a27,col:1});
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',-35,42,9,18,14,2221,{s0:.58,s1:.35,tint:0x63382f,col:1});
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',35,42,9,18,14,2222,{s0:.58,s1:.35,tint:0x63382f,col:1});
-    [-10,0,10].forEach(x=>putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,-28,1.25,0,0x5f372f,1.2));
-    [-55,55].forEach(x=>{for(let z=58;z>=-60;z-=18)mapBlock(mi,g,x,z,4.5,5.5,7,0x3b2926,(x<0?.16:-.16),2.2,0x120403);});
-    [[-18,-8],[18,-12],[-22,-38],[22,-38],[-46,-58],[46,-58]].forEach((q,i)=>mapCrystal(mi,g,q[0],q[1],.48,3.2+(i%2)*.8,i%2?0xff6b2d:0xcc3f24));
-  }else if(mi===3){
-    // Reino de los Muertos: corredor de catacumba central, cementerios a los lados y trono al norte.
-    pathRoute(mi,g,[[0,6],[0,-18],[0,-45],[-28,-72]],4.5,0x454755);
-    pathRoute(mi,g,[[0,-45],[28,-72]],4.5,0x454755);
-    for(let z=2;z>=-46;z-=9){putEnv(mi,g,'assets/dungeon/wall_corner.gltf',-18,z,1.02,Math.PI/2,0x666575,1.25);putEnv(mi,g,'assets/dungeon/wall_corner.gltf',18,z,1.02,-Math.PI/2,0x666575,1.25);}
-    for(let z=-5;z>=-50;z-=11){putEnv(mi,g,'assets/dungeon/pillar.gltf',-11,z,1.0,0,0x777489,.65);putEnv(mi,g,'assets/dungeon/pillar.gltf',11,z,1.0,0,0x777489,.65);}
-    [-8,0,8].forEach(x=>putEnv(mi,g,'assets/dungeon/wall_archedwindow_gated_scaffold.gltf',x,-24,.9,0,0x706b7e,1.0));
-    [-36,-18,0,18,36].forEach((x,i)=>putEnv(mi,g,'assets/dungeon/floor_tile_extralarge_grates.gltf',x*.32,-43,1.3,0,0x5f5d70,0));
-    putEnv(mi,g,'assets/dungeon/stairs_long.gltf',0,-53,1.2,0,0x6b6879,2.2);
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',-57,25,13,22,24,3311,{s0:.52,s1:.34,tint:0x5e665c,col:1});
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',57,25,13,22,24,3312,{s0:.52,s1:.34,tint:0x5e665c,col:1});
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',-62,-34,10,18,22,3313,{s0:.5,s1:.32,tint:0x586057,col:1});
-    envCluster(mi,g,'assets/nature/DeadTree_1.gltf',62,-34,10,18,22,3314,{s0:.5,s1:.32,tint:0x586057,col:1});
-    for(let i=0;i<7;i++){putEnv(mi,g,'assets/dungeon/barrel_large_decorated.gltf',-12+i*4,30,.76,i*.7,0x645749,.6);}
-    [-70,70].forEach(x=>{for(let z=52;z>=-60;z-=19)mapBlock(mi,g,x,z,5,4.4,8,0x383a45,0,2.4);});
-  }else{
-    // Ruinas Corruptas: aldea destruida con calles, plazas laterales y bosque retorcido en el perímetro.
-    pathRoute(mi,g,[[0,6],[0,-16],[0,-40],[-30,-72]],4.8,0x5f5748);
-    pathRoute(mi,g,[[0,-40],[30,-72]],4.8,0x5f5748);
-    pathRoute(mi,g,[[-46,28],[46,28]],4.0,0x544c40);
-    envCluster(mi,g,'assets/nature/TwistedTree_4.gltf',-65,22,15,20,28,4411,{s0:.46,s1:.26,tint:0x627256,col:1.25});
-    envCluster(mi,g,'assets/nature/TwistedTree_4.gltf',65,22,15,20,28,4412,{s0:.46,s1:.26,tint:0x627256,col:1.25});
-    envCluster(mi,g,'assets/nature/TwistedTree_4.gltf',-70,-35,12,18,24,4413,{s0:.45,s1:.25,tint:0x5e6e52,col:1.25});
-    envCluster(mi,g,'assets/nature/TwistedTree_4.gltf',70,-35,12,18,24,4414,{s0:.45,s1:.25,tint:0x5e6e52,col:1.25});
-    envCluster(mi,g,'assets/nature/Rock_Medium_3.gltf',-48,-50,12,22,18,4421,{s0:.75,s1:.75,tint:0x777264,col:.9});
-    envCluster(mi,g,'assets/nature/Rock_Medium_3.gltf',48,-50,12,22,18,4422,{s0:.75,s1:.75,tint:0x777264,col:.9});
-    const ruins=[[-38,34,0],[-18,34,Math.PI/2],[18,34,Math.PI/2],[38,34,0],[-38,8,Math.PI/2],[-22,4,0],[22,4,0],[38,8,Math.PI/2],[-42,-22,0],[-22,-24,Math.PI/2],[22,-24,Math.PI/2],[42,-22,0]];
-    ruins.forEach(q=>putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',q[0],q[1],1.22,q[2],0x827663,1.15));
-    envLine(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',[-42,42],[-8,42],9,{s:1,tint:0x625847,col:.7});
-    envLine(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',[8,42],[42,42],9,{s:1,tint:0x625847,col:.7});
-    for(let x=-42;x<=42;x+=14)putEnv(mi,g,'assets/dungeon/pillar.gltf',x,-50,1.02,0,0x686657,.72);
-    putEnv(mi,g,'assets/medieval/Stairs_Exterior_SingleSide.gltf',0,-48,2.2,0,0x7c705c,1.2);
-    [[-12,18],[12,18],[-10,-12],[10,-12]].forEach((q,i)=>mapCrystal(mi,g,q[0],q[1],.38,2.2+(i%2)*.5,i%2?0x6e9a58:0x879b67));
-  }
-}
-function spawnSpot(mi,t,cx,cz,n,rx,rz,seed){
-  const R=rngMap(seed);for(let i=0;i<n;i++){const a=(i/n)*TAU+R()*.55,rr=.35+R()*.65,x=cx+Math.cos(a)*rx*rr,z=cz+Math.sin(a)*rz*rr;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+3))continue;spawnEnemy(t,x,z,undefined,mi);}
-}
-function spawnMapPopulation(mi){
-  if(mi===1){
-    spawnSpot(mi,'frost_orc',-34,31,5,12,9,7101);spawnSpot(mi,'frost_orc',34,31,5,12,9,7102);
-    spawnSpot(mi,'frost_tribal',-34,-12,5,11,10,7111);spawnSpot(mi,'frost_tribal',34,-12,5,11,10,7112);
-    spawnSpot(mi,'yeti',-54,-42,3,10,9,7121);spawnSpot(mi,'yeti',54,-42,3,10,9,7122);spawnEnemy('yeti',0,-52,undefined,mi);
-    spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);
-  }else if(mi===2){
-    spawnSpot(mi,'dino_fire',-34,28,5,13,10,7201);spawnSpot(mi,'dino_fire',34,20,5,13,10,7202);
-    spawnSpot(mi,'armabee_fire',-54,3,5,12,11,7211);spawnSpot(mi,'armabee_fire',52,34,5,12,11,7212);
-    spawnSpot(mi,'goleling_fire',-42,-34,4,10,9,7221);spawnSpot(mi,'goleling_fire',42,-34,4,10,9,7222);
-    spawnEnemy('dragon_ancient',-30,-72,16,mi);spawnEnemy('dragon_evolved',30,-72,18,mi);
-  }else if(mi===3){
-    spawnSpot(mi,'ghost_mob',-48,27,6,13,11,7301);spawnSpot(mi,'ghost_mob',48,27,6,13,11,7302);
-    spawnSpot(mi,'orc_skull',-12,-28,6,8,12,7311);spawnSpot(mi,'orc_skull',12,-28,6,8,12,7312);
-    spawnSpot(mi,'ghost_mob',0,-49,3,9,6,7321);
-    spawnEnemy('ghost_skull_lord',-28,-72,20,mi);spawnEnemy('skull_warlord',28,-72,22,mi);
-  }else{
-    spawnSpot(mi,'ruin_orc',-30,31,5,11,9,7401);spawnSpot(mi,'ruin_orc',30,31,5,11,9,7402);
-    spawnSpot(mi,'mushroom_corrupt',-43,-3,5,11,10,7411);spawnSpot(mi,'mushroom_corrupt',43,-3,5,11,10,7412);
-    spawnSpot(mi,'golem_guard',-37,-39,4,10,8,7421);spawnSpot(mi,'golem_guard',37,-39,4,10,8,7422);
-    spawnEnemy('golem_evolved_boss',-30,-72,24,mi);spawnEnemy('blue_demon_boss',30,-72,26,mi);
-  }
+function spawnMapPopulation(mi){const R=rngMap(7000+mi);function wave(t,n,test){let c=0,k=0;while(c<n&&k<n*80){k++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<22||z<-56||!test(x,z))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+4))continue;spawnEnemy(t,x,z,undefined,mi);c++;}}
+  if(mi===1){wave('frost_orc',12,()=>true);wave('frost_tribal',10,(x,z)=>x<35);wave('yeti',7,(x,z)=>Math.abs(x)>24||z<0);spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);}
+  else if(mi===2){wave('dino_fire',11,()=>true);wave('armabee_fire',11,()=>true);wave('goleling_fire',8,(x,z)=>Math.abs(x)>20);spawnEnemy('dragon_ancient',-30,-72,16,mi);spawnEnemy('dragon_evolved',30,-72,18,mi);}
+  else if(mi===3){wave('ghost_mob',14,()=>true);wave('orc_skull',13,(x,z)=>z<30);spawnEnemy('ghost_skull_lord',-28,-72,20,mi);spawnEnemy('skull_warlord',28,-72,22,mi);}
+  else{wave('ruin_orc',12,()=>true);wave('mushroom_corrupt',10,(x,z)=>x<35);wave('golem_guard',9,(x,z)=>Math.abs(x)>18);spawnEnemy('golem_evolved_boss',-30,-72,24,mi);spawnEnemy('blue_demon_boss',30,-72,26,mi);}
 }
 async function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}
 function clearTransientWorld(){P.target=null;P.dest=null;P.engaged=false;atkHeld=false;for(let i=drops.length-1;i>=0;i--){scene.remove(drops[i].g);drops.splice(i,1);}for(let i=projectiles.length-1;i>=0;i--){if(projectiles[i].g)scene.remove(projectiles[i].g);projectiles.splice(i,1);}later.length=0;}
 function setMapVisibility(mi){for(let i=1;i<mapGroups.length;i++)if(mapGroups[i])mapGroups[i].visible=(i===mi);enemies.forEach(e=>{if(e.map!==undefined){e.group.visible=e.map===mi&&!(e.state==='dead'&&e.deadT>=1.4);e.bar.visible=false;}});}
 function mapLoad(show,mi){const el=$('#mapLoad');if(!el)return;el.hidden=!show;if(show){$('#mapLoadIcon').textContent=GAME_MAPS[mi].icon;$('#mapLoadName').textContent='Viajando a '+GAME_MAPS[mi].name+'…';}}
-async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;mapFx(mi);activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
+async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
 
 travelPanelHTML=function(){return '<div class="tabs"><button class="on">Viajar</button><button class="x" data-a="close" aria-label="Cerrar">✕</button></div><div class="pb"><div class="travelhead"><h3>Mapa del Reino</h3><p>Los cinco destinos están conectados. La primera entrada a cada mapa carga sus modelos y monstruos.</p></div><div class="travelgrid">'+GAME_MAPS.map((m,i)=>{const cur=i===currentMap,built=i===0||mapBuilt[i];return '<button class="mapcard'+(cur?' cur':'')+'" data-a="travel" data-v="'+i+'" style="--mc:'+m.color+'"><div class="mi">'+m.icon+'</div><div class="mn">'+m.name+'</div><div class="md">'+m.desc+'</div><div class="ms">'+(cur?'● Estás aquí':built?'Viajar':'Cargar y viajar')+'</div></button>';}).join('')+'</div></div>';};
 
