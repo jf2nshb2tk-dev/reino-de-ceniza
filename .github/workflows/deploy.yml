@@ -36,6 +36,9 @@ jobs:
       - name: Aplicar filtros de loot y venta por color
         run: python3 .github/scripts/loot_filter_patch.py
 
+      - name: Aplicar balance de combate y experiencia
+        run: python3 .github/scripts/balance_patch.py
+
       - name: Validar JavaScript
         shell: bash
         run: |
