@@ -1,0 +1,817 @@
+
+===== function putEnv =====
+function putEnv(mi,g,path,x,z,s,ry,tint,col){const o=cloneEnv(path,tint);o.position.set(x,mapLocalH(mi,x,z),z);o.rotation.y=ry||0;o.scale.setScalar(s||1);g.add(o);if(col)addMapCol(mi,x,z,col*(s||1));return o;}
+function rngMap(seed){let a=seed|0;return ()=>{a=(Math.imul(a,1664525)+1013904223)|0;return (a>>>0)/4294967296;};}
+function makePortalShrine(mi,g){const y=mapLocalH(mi,0,6),m=new THREE.MeshPhongMaterial({color:mi===1?0xbfdfff:mi===2?0x6b3028:mi===3?0x625777:0x59664e,emissive:mi===2?0x431008:0x101018});for(let i=0;i<6;i++){const a=i/6*TAU,x=Math.cos(a)*5,z=6+Math.sin(a)*5;const p=new THREE.Mesh(UC,m);p.scale.set(.7,4,.7);p.position.set(x,mapLocalH(mi,x,z)+2,z);g.add(p);addMapCol(mi,x,z,.65);}const ring=new THREE.Mesh(new THREE.TorusGeometry(2.2,.12,8,40),new THREE.MeshBasicMaterial({color:GAME_MAPS[mi].color,transparent:true,opacity:.78}));ring.position.set(0,y+.15,6);ring.rotation.x=Math.PI/2;g.add(ring);}
+function makeBossArena(mi,g,bp,tint){const y=mapLocalH(mi,bp.x,bp.z);for(let i=0;i<8;i++){const a=i/8*TAU,x=bp.x+Math.cos(a)*10.5,z=bp.z+Math.sin(a)*10.5;const p=new THREE.Mesh(UC,new THREE.MeshPhongMaterial({color:tint||0x62584f}));p.scale.set(.55,2.8,.55);p.position.set(x,mapLocalH(mi,x,z)+1.4,z);g.add(p);addMapCol(mi,x,z,.5);}const r=new THREE.Mesh(new THREE.RingGeometry(8.6,9.2,48),new THREE.MeshBasicMaterial({color:GAME_MAPS[mi].color,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false}));r.rotation.x=-Math.PI/2;r.position.set(bp.x,y+.08,bp.z);g.add(r);}
+function makeLavaPools(g){MAP_LAVA[2].forEach(p=>{const m=makeLava(),d=new THREE.Mesh(DISC,m);d.rotation.x=-Math.PI/2;d.scale.set(p.r+1.1,p.r+1.1,1);d.position.set(p.x,mapLocalH(2,p.x,p.z)+.18,p.z);g.add(d);const glow=new THREE.PointLight(0xff5820,.8,20,2);glow.position.set(p.x,mapLocalH(2,p.x,p.z)+2,p.z);g.add(glow);});}
+function makeTerrain(mi){const seg=isTouch?96:126,geo=new THREE.PlaneGeometry(WORLD,WORLD,seg,seg);geo.rotateX(-Math.PI/2);const pa=geo.attributes.position,ca=new Float32Array(pa.count*3),tc=new THREE.Color();for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),h=mapLocalH(mi,x,z);pa.setY(i,h);mapColor(mi,x,z,h,tc);ca[i*3]=tc.r;ca[i*3+1]=tc.g;ca[i*3+2]=tc.b;}geo.setAttribute('color',new THREE.BufferAttribute(ca,3));geo.computeVertexNormals();const me=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000,map:groundTex,bumpMap:groundTex,bumpScale:mi===1?.35:.7}));me.receiveShadow=true;return me;}
+
+const MAP_REQ={
+  1:{mon:['Orc','Tribal','Yeti'],env:['assets/nature/Pine_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/medieval/Wall_Arch.gltf','assets/medieval/Prop_WoodenFence_Single.gltf']},
+  2:{mon:['Dino','Armabee','Goleling','Dragon','Dragon_Evolved'],env:['assets/nature/DeadTree_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf']},
+  3:{mon:['Ghost','Ghost_Skull','Orc_Skull'],env:['assets/nature/DeadTree_1.gltf','assets/dungeon/pillar.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/wall_archedwindow_gated_scaffold.gltf','assets/dungeon/floor_tile_extralarge_grates.gltf','assets/dungeon/stairs_long.gltf','assets/dungeon/barrel_large_decorated.gltf']},
+  4:{mon:['Orc','MushroomKing','Goleling','Goleling_Evolved','BlueDemon'],env:['assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf','assets/medieval/Stairs_Exterior_SingleSide.gltf','assets/medieval/Prop_WoodenFence_Single.gltf','assets/dungeon/pillar.gltf']}
+};
+async function prepareMapAssets(mi){const q=MAP_REQ[mi];await Promise.all(q.mon.map(needMonster).concat(q.env.map(needEnv)));}
+function scatter(mi,g,path,n,seed,opt){const R=rngMap(seed),bs=MAP_BOSSES[mi]||[];let c=0,t=0;while(c<n&&t<n*30){t++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<16||bs.some(b=>Math.hypot(x-b.x,z-b.z)<14))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+3))continue;putEnv(mi,g,path,x,z,(opt.s0||.7)+R()*(opt.s1||.4),R()*TAU,opt.tint,opt.col||0);c++;}}
+function buildScenery(mi,g){makePortalShrine(mi,g);(MAP_BOSSES[mi]||[]).forEach(b=>makeBossArena(mi,g,b,mi===1?0x8ea4b0:mi===2?0x55332c:mi===3?0x555063:0x5b5b4c));
+  if(mi===1){scatter(mi,g,'assets/nature/Pine_1.gltf',28,1101,{s0:.72,s1:.45,tint:0xe5f3ff,col:1.5});scatter(mi,g,'assets/nature/Rock_Medium_1.gltf',25,1102,{s0:.7,s1:.8,tint:0xc7d7e0,col:1});for(let i=0;i<7;i++){const x=-60+i*20,z=-24+(i%2)*10;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.2,i%2?Math.PI/2:0,0xb8c7d0,1.3);}for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-14+i*4,30,1,0,0xd5e1e7,.9);
+  }else if(mi===2){scatter(mi,g,'assets/nature/DeadTree_1.gltf',16,2201,{s0:.55,s1:.45,tint:0x5a332a,col:1.3});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',34,2202,{s0:.8,s1:1.2,tint:0x4d342f,col:1});for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',-70+i*20,-42+(i%2)*9,1.25,i%2?Math.PI/2:0,0x6a4034,1.3);makeLavaPools(g);
+  }else if(mi===3){scatter(mi,g,'assets/nature/DeadTree_1.gltf',18,3301,{s0:.5,s1:.35,tint:0x667064,col:1.2});for(let i=0;i<10;i++){const x=-52+(i%5)*26,z=-14-Math.floor(i/5)*24;putEnv(mi,g,'assets/dungeon/wall_corner.gltf',x,z,1.15,(i%4)*Math.PI/2,0x777485,1.3);}for(let i=0;i<12;i++){const x=-65+(i%6)*26,z=-47+(i%2)*10;putEnv(mi,g,'assets/dungeon/pillar.gltf',x,z,1.1,0,0x79768a,.8);}putEnv(mi,g,'assets/dungeon/stairs_long.gltf',0,-44,1.1,0,0x777487,2.2);putEnv(mi,g,'assets/dungeon/floor_tile_extralarge_grates.gltf',0,-60,2.6,0,0x6d687b,0);for(let i=0;i<6;i++)putEnv(mi,g,'assets/dungeon/barrel_large_decorated.gltf',-12+i*4,26,0.75,i,0x6f604f,.7);
+  }else{scatter(mi,g,'assets/nature/TwistedTree_4.gltf',17,4401,{s0:.42,s1:.28,tint:0x6d805d,col:1.8});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',24,4402,{s0:.75,s1:.8,tint:0x777568,col:1});for(let i=0;i<9;i++){const x=-64+(i%5)*30,z=-28+Math.floor(i/5)*22;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.25,(i%4)*Math.PI/2,0x8d806a,1.3);}for(let i=0;i<10;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-34+i*7,42+(i%2)*5,1,0,0x675c4a,.9);for(let i=0;i<8;i++)putEnv(mi,g,'assets/dungeon/pillar.gltf',-49+i*14,-52,1,0,0x6d6a5b,.8);putEnv(mi,g,'assets/medieval/Stairs_Exterior_SingleSide.gltf',0,-45,2.8,0,0x82745d,1.2);}
+}
+function spawnMapPopulation(mi){const R=rngMap(7000+mi);function wave(t,n,test){let c=0,k=0;while(c<n&&k<n*80){k++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<22||z<-56||!test(x,z))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+4))continue;spawnEnemy(t,x,z,undefined,mi);c++;}}
+  if(mi===1){wave('frost_orc',12,()=>true);wave('frost_tribal',10,(x,z)=>x<35);wave('yeti',7,(x,z)=>Math.abs(x)>24||z<0);spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);}
+  else if(mi===2){wave('dino_fire',11,()=>true);wave('armabee_fire',11,()=>true);wave('goleling_fire',8,(x,z)=>Math.abs(x)>20);spawnEnemy('dragon_ancient',-30,-72,16,mi);spawnEnemy('dragon_evolved',30,-72,18,mi);}
+  else if(mi===3){wave('ghost_mob',14,()=>true);wave('orc_skull',13,(x,z)=>z<30);spawnEnemy('ghost_skull_lord',-28,-72,20,mi);spawnEnemy('skull_warlord',28,-72,22,mi);}
+  else{wave('ruin_orc',12,()=>true);wave('mushroom_corrupt',10,(x,z)=>x<35);wave('golem_guard',9,(x,z)=>Math.abs(x)>18);spawnEnemy('golem_evolved_boss',-30,-72,24,mi);spawnEnemy('blue_demon_boss',30,-72,26,mi);}
+}
+async function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}
+function clearTransientWorld(){P.target=null;P.dest=null;P.engaged=false;atkHeld=false;for(let i=drops.length-1;i>=0;i--){scene.remove(drops[i].g);drops.splice(i,1);}for(let i=projectiles.length-1;i>=0;i--){if(projectiles[i].g)scene.remove(projectiles[i].g);projectiles.splice(i,1);}later.length=0;}
+function setMapVisibility(mi){for(let i=1;i<mapGroups.length;i++)if(mapGroups[i])mapGroups[i].visible=(i===mi);enemies.forEach(e=>{if(e.map!==undefined){e.group.visible=e.map===mi&&!(e.state==='dead'&&e.deadT>=1.4);e.bar.visible=false;}});}
+function mapLoad(show,mi){const el=$('#mapLoad');if(!el)return;el.hidden=!show;if(show){$('#mapLoadIcon').textContent=GAME_MAPS[mi].icon;$('#mapLoadName').textContent='Viajando a '+GAME_MAPS[mi].name+'…';}}
+async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
+
+travelPanelHTML=function(){return '<div class="tabs"><button class="on">Viajar</button><button class="x" data-a="close" aria-label="Cerrar">✕</button></div><div class="pb"><div class="travelhead"><h3>Mapa del Reino</h3><p>Los cinco destinos están conectados. La primera entrada a cada mapa carga sus modelos, escenario y monstruos.</p></div><div class="travelgrid">'+GAME_MAPS.map((m,i)=>{const cur=i===currentMap,built=i===0||mapBuilt[i];return '<button class="mapcard'+(cur?' cur':'')+'" data-a="travel" data-v="'+i+'" style="--mc:'+m.color+'"><div class="mi">'+m.icon+'</div><div class="mn">'+m.name+'</div><div class="md">'+m.desc+'</div><div class="ms">'+(cur?'● Estás aquí':built?'Viajar':'Cargar y viajar')+'</div></button>';}).join('')+'</div></div>';};
+
+const _startPlay0=startPlay;
+startPlay=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);for(let i=0;i<AMB_N;i++)ambReset(i,true);} _startPlay0();P.y=mapWorldH(0,P.x,P.z);};
+const _toTitle0=toTitle;
+toTitle=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);} _toTitle0();P.y=mapWorldH(0,P.x,P.z);camX=P.x;camZ=P.z;camY=P.y;};
+resetWorld=function(){enemies.forEach(e=>{e.state='idle';e.hp=e.maxHp;e.x=e.hx;e.z=e.hz;e.y=mapWorldH(e.map||0,e.x,e.z);e.group.rotation.x=0;e.group.position.set(e.x,e.y,e.z);e.group.visible=(e.map||0)===currentMap;e.bar.visible=false;e.dotT=0;e.slam=null;e.stunT=0;e.provoked=false;});};
+const _revive0=revive;
+revive=function(){_revive0();P.y=mapWorldH(currentMap,P.x,P.z);burst(P.x,P.y+1,P.z,30,[1,.8,.5],5,.9,.3,-1);};
+
+/* =========================================================
+   DECORACIÓN EXTRA DE LOS 4 MAPAS NUEVOS
+   Caminos, lagos, bosques, ruinas, cementerios, hongos, cristales,
+   antorchas, campamentos y detalles de cada bioma. Todo con
+   InstancedMesh (pocas llamadas de dibujo) y sprites aditivos
+   en lugar de luces reales, para que corra bien en celular.
+   ========================================================= */
+const DEC={anim:[[],[],[],[],[]],glow:null,geo:null,moon:null,mat:{}};
+const DEC_LAKES=[{x:-48,z:26,r:13},{x:56,z:34,r:10},{x:-64,z:-34,r:9}];
+const DEC_PATHC=[null,[.6,.65,.72],[.4,.32,.28],[.56,.56,.6],[.5,.46,.37]];
+
+/* --- ampliar los modelos que cada mapa precarga --- */
+MAP_REQ[1].env.push('assets/nature/DeadTree_1.gltf','assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/dungeon/pillar.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[2].env.push('assets/nature/Rock_Medium_1.gltf','assets/dungeon/pillar.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[3].env.push('assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_1.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf');
+MAP_REQ[4].env.push('assets/nature/Pine_1.gltf','assets/nature/DeadTree_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/wall_archedwindow_gated_scaffold.gltf','assets/dungeon/barrel_large_decorated.gltf','assets/dungeon/floor_tile_extralarge_grates.gltf');
+
+/* --- lagos helados: el terreno se hunde un poco --- */
+const _mapLocalH1=mapLocalH;
+mapLocalH=function(mi,x,z){
+  let h=_mapLocalH1(mi,x,z);
+  if(mi===1){for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],d=Math.hypot(x-p.x,z-p.z),w=1-ss(p.r*.72,p.r+4,d);if(w>0)h=lerp(h,-.55,w);}}
+  return h;
+};
+
+/* --- caminos --- */
+function decSegD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l=dx*dx+dz*dz;let t=l?((px-ax)*dx+(pz-az)*dz)/l:0;t=t<0?0:t>1?1:t;const qx=ax+dx*t-px,qz=az+dz*t-pz;return Math.sqrt(qx*qx+qz*qz);}
+function decPathD(mi,x,z){
+  const bs=MAP_BOSSES[mi]||[],a=bs[0]||{x:-28,z:-72},b=bs[1]||{x:28,z:-72};
+  let d=decSegD(x,z,0,6,0,-38);
+  d=Math.min(d,decSegD(x,z,0,-38,a.x,a.z+9),decSegD(x,z,0,-38,b.x,b.z+9),decSegD(x,z,-86,12,-30,2),decSegD(x,z,-30,2,0,6),decSegD(x,z,0,6,30,2),decSegD(x,z,30,2,86,12));
+  return d+(vnoise(x*.16+5,z*.16-9)-.5)*2.2;
+}
+
+/* --- colores del terreno: caminos, parches de roca/ceniza/corrupción, hielo de los lagos --- */
+const _mapColorD=mapColor;
+mapColor=function(mi,x,z,h,out){
+  _mapColorD(mi,x,z,h,out);
+  if(mi===0)return out;
+  const big=vnoise(x*.045+mi*13,z*.045-mi*7),v=.86+.28*big;
+  let r=out.r*v,g=out.g*v,b=out.b*v;
+  if(mi===1){
+    const rk=ss(.66,.8,vnoise(x*.06+3,z*.06+8))*.7;r=lerp(r,.36,rk);g=lerp(g,.4,rk);b=lerp(b,.46,rk);
+    for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],w=1-ss(p.r*.6,p.r+1.2,Math.hypot(x-p.x,z-p.z));if(w>0){r=lerp(r,.5,w);g=lerp(g,.74,w);b=lerp(b,.88,w);}}
+  }else if(mi===2){
+    const ash=ss(.62,.8,vnoise(x*.07-9,z*.07+4))*.6;r=lerp(r,.3,ash);g=lerp(g,.28,ash);b=lerp(b,.28,ash);
+  }else if(mi===3){
+    const gr=ss(.64,.82,vnoise(x*.06+21,z*.06-5))*.55;r=lerp(r,.2,gr);g=lerp(g,.28,gr);b=lerp(b,.22,gr);
+  }else{
+    const co=ss(.68,.85,vnoise(x*.05-70,z*.05+30))*.7;r=lerp(r,.34,co);g=lerp(g,.16,co);b=lerp(b,.42,co);
+  }
+  const pw=1-ss(2,3.6,decPathD(mi,x,z));
+  if(pw>0){const pc=DEC_PATHC[mi],nn=.9+.2*vnoise(x*.9,z*.9);r=lerp(r,pc[0]*nn,pw*.9);g=lerp(g,pc[1]*nn,pw*.9);b=lerp(b,pc[2]*nn,pw*.9);}
+  out.setRGB(r,g,b);return out;
+};
+
+/* --- herramientas --- */
+function decGlowTex(){
+  if(DEC.glow)return DEC.glow;
+  const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.28,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gr;x.fillRect(0,0,64,64);DEC.glow=new THREE.CanvasTexture(c);return DEC.glow;
+}
+/* resplandor aditivo; anim: 'flame' parpadea, 'bob' flota, 'pulse' respira */
+function decGlow(mi,g,x,y,z,size,color,anim,op){
+  const m=new THREE.SpriteMaterial({map:decGlowTex(),color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:op||.9}),s=new THREE.Sprite(m);
+  s.position.set(x,y,z);s.scale.set(size,size,1);g.add(s);
+  if(anim)DEC.anim[mi].push({o:s,k:anim,ph:Math.random()*6.28,s0:size,y0:y,op0:m.opacity});
+  return s;
+}
+/* charco de luz en el suelo */
+function decPool(mi,g,x,z,r,color,op){
+  const m=new THREE.Mesh(PLANE,new THREE.MeshBasicMaterial({map:decGlowTex(),color:color,transparent:true,opacity:op||.5,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  m.scale.set(r*2,1,r*2);m.position.set(x,mapLocalH(mi,x,z)+.08,z);g.add(m);return m;
+}
+const _dM=new THREE.Matrix4(),_dQ=new THREE.Quaternion(),_dP=new THREE.Vector3(),_dS=new THREE.Vector3(),_dE=new THREE.Euler(),_dC=new THREE.Color();
+function decInst(g,geo,mat,list,shadow){
+  const im=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));
+  for(let i=0;i<list.length;i++){
+    const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);_dP.set(o.x,o.y,o.z);
+    const s=o.s||1;_dS.set(o.sx||s,o.sy||s,o.sz||s);_dM.compose(_dP,_dQ,_dS);im.setMatrixAt(i,_dM);
+    if(o.c!==undefined){_dC.setHex(o.c);im.setColorAt(i,_dC);}
+  }
+  im.count=list.length;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;
+  im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);return im;
+}
+/* modelos glTF en instancias (mucho más barato que clonar cada uno) */
+function decModelInst(mi,g,path,list,tint,shadow){
+  const gl=ENV_READY[path];if(!gl||!list.length)return;
+  gl.scene.updateMatrixWorld(true);
+  const parts=[];gl.scene.traverse(m=>{if(m.isMesh)parts.push(m);});
+  const tc=tint!==undefined?new THREE.Color(tint):null;
+  parts.forEach(m=>{
+    const src=Array.isArray(m.material)?m.material[0]:m.material,nm=src.clone();
+    if(tc&&nm.color)nm.color.lerp(tc,.34);
+    const im=new THREE.InstancedMesh(m.geometry,nm,list.length);
+    for(let i=0;i<list.length;i++){
+      const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);
+      _dP.set(o.x,o.y===undefined?mapLocalH(mi,o.x,o.z):o.y,o.z);_dS.setScalar(o.s||1);
+      _dM.compose(_dP,_dQ,_dS);_dM.multiply(m.matrixWorld);im.setMatrixAt(i,_dM);
+    }
+    im.count=list.length;im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);
+  });
+}
+/* une varias formas en una sola geometría con color por vértice */
+function decMerge(parts){
+  const pos=[],nor=[],col=[],uv=[],idx=[],m=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3(),c=new THREE.Color();let off=0;
+  parts.forEach(pt=>{
+    m.compose(new THREE.Vector3(pt.x||0,pt.y||0,pt.z||0),new THREE.Quaternion().setFromEuler(new THREE.Euler(pt.rx||0,pt.ry||0,pt.rz||0)),new THREE.Vector3(pt.sx||1,pt.sy||1,pt.sz||1));
+    nm.getNormalMatrix(m);c.setHex(pt.c);
+    const p=pt.g.attributes.position,n=pt.g.attributes.normal,u=pt.g.attributes.uv;
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyMatrix4(m);pos.push(v.x,v.y,v.z);
+ 
+
+===== function buildScenery(mi,g) =====
+function buildScenery(mi,g){makePortalShrine(mi,g);(MAP_BOSSES[mi]||[]).forEach(b=>makeBossArena(mi,g,b,mi===1?0x8ea4b0:mi===2?0x55332c:mi===3?0x555063:0x5b5b4c));
+  if(mi===1){scatter(mi,g,'assets/nature/Pine_1.gltf',28,1101,{s0:.72,s1:.45,tint:0xe5f3ff,col:1.5});scatter(mi,g,'assets/nature/Rock_Medium_1.gltf',25,1102,{s0:.7,s1:.8,tint:0xc7d7e0,col:1});for(let i=0;i<7;i++){const x=-60+i*20,z=-24+(i%2)*10;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.2,i%2?Math.PI/2:0,0xb8c7d0,1.3);}for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-14+i*4,30,1,0,0xd5e1e7,.9);
+  }else if(mi===2){scatter(mi,g,'assets/nature/DeadTree_1.gltf',16,2201,{s0:.55,s1:.45,tint:0x5a332a,col:1.3});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',34,2202,{s0:.8,s1:1.2,tint:0x4d342f,col:1});for(let i=0;i<8;i++)putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',-70+i*20,-42+(i%2)*9,1.25,i%2?Math.PI/2:0,0x6a4034,1.3);makeLavaPools(g);
+  }else if(mi===3){scatter(mi,g,'assets/nature/DeadTree_1.gltf',18,3301,{s0:.5,s1:.35,tint:0x667064,col:1.2});for(let i=0;i<10;i++){const x=-52+(i%5)*26,z=-14-Math.floor(i/5)*24;putEnv(mi,g,'assets/dungeon/wall_corner.gltf',x,z,1.15,(i%4)*Math.PI/2,0x777485,1.3);}for(let i=0;i<12;i++){const x=-65+(i%6)*26,z=-47+(i%2)*10;putEnv(mi,g,'assets/dungeon/pillar.gltf',x,z,1.1,0,0x79768a,.8);}putEnv(mi,g,'assets/dungeon/stairs_long.gltf',0,-44,1.1,0,0x777487,2.2);putEnv(mi,g,'assets/dungeon/floor_tile_extralarge_grates.gltf',0,-60,2.6,0,0x6d687b,0);for(let i=0;i<6;i++)putEnv(mi,g,'assets/dungeon/barrel_large_decorated.gltf',-12+i*4,26,0.75,i,0x6f604f,.7);
+  }else{scatter(mi,g,'assets/nature/TwistedTree_4.gltf',17,4401,{s0:.42,s1:.28,tint:0x6d805d,col:1.8});scatter(mi,g,'assets/nature/Rock_Medium_3.gltf',24,4402,{s0:.75,s1:.8,tint:0x777568,col:1});for(let i=0;i<9;i++){const x=-64+(i%5)*30,z=-28+Math.floor(i/5)*22;putEnv(mi,g,'assets/medieval/Wall_Arch.gltf',x,z,1.25,(i%4)*Math.PI/2,0x8d806a,1.3);}for(let i=0;i<10;i++)putEnv(mi,g,'assets/medieval/Prop_WoodenFence_Single.gltf',-34+i*7,42+(i%2)*5,1,0,0x675c4a,.9);for(let i=0;i<8;i++)putEnv(mi,g,'assets/dungeon/pillar.gltf',-49+i*14,-52,1,0,0x6d6a5b,.8);putEnv(mi,g,'assets/medieval/Stairs_Exterior_SingleSide.gltf',0,-45,2.8,0,0x82745d,1.2);}
+}
+function spawnMapPopulation(mi){const R=rngMap(7000+mi);function wave(t,n,test){let c=0,k=0;while(c<n&&k<n*80){k++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<22||z<-56||!test(x,z))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+4))continue;spawnEnemy(t,x,z,undefined,mi);c++;}}
+  if(mi===1){wave('frost_orc',12,()=>true);wave('frost_tribal',10,(x,z)=>x<35);wave('yeti',7,(x,z)=>Math.abs(x)>24||z<0);spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);}
+  else if(mi===2){wave('dino_fire',11,()=>true);wave('armabee_fire',11,()=>true);wave('goleling_fire',8,(x,z)=>Math.abs(x)>20);spawnEnemy('dragon_ancient',-30,-72,16,mi);spawnEnemy('dragon_evolved',30,-72,18,mi);}
+  else if(mi===3){wave('ghost_mob',14,()=>true);wave('orc_skull',13,(x,z)=>z<30);spawnEnemy('ghost_skull_lord',-28,-72,20,mi);spawnEnemy('skull_warlord',28,-72,22,mi);}
+  else{wave('ruin_orc',12,()=>true);wave('mushroom_corrupt',10,(x,z)=>x<35);wave('golem_guard',9,(x,z)=>Math.abs(x)>18);spawnEnemy('golem_evolved_boss',-30,-72,24,mi);spawnEnemy('blue_demon_boss',30,-72,26,mi);}
+}
+async function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}
+function clearTransientWorld(){P.target=null;P.dest=null;P.engaged=false;atkHeld=false;for(let i=drops.length-1;i>=0;i--){scene.remove(drops[i].g);drops.splice(i,1);}for(let i=projectiles.length-1;i>=0;i--){if(projectiles[i].g)scene.remove(projectiles[i].g);projectiles.splice(i,1);}later.length=0;}
+function setMapVisibility(mi){for(let i=1;i<mapGroups.length;i++)if(mapGroups[i])mapGroups[i].visible=(i===mi);enemies.forEach(e=>{if(e.map!==undefined){e.group.visible=e.map===mi&&!(e.state==='dead'&&e.deadT>=1.4);e.bar.visible=false;}});}
+function mapLoad(show,mi){const el=$('#mapLoad');if(!el)return;el.hidden=!show;if(show){$('#mapLoadIcon').textContent=GAME_MAPS[mi].icon;$('#mapLoadName').textContent='Viajando a '+GAME_MAPS[mi].name+'…';}}
+async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
+
+travelPanelHTML=function(){return '<div class="tabs"><button class="on">Viajar</button><button class="x" data-a="close" aria-label="Cerrar">✕</button></div><div class="pb"><div class="travelhead"><h3>Mapa del Reino</h3><p>Los cinco destinos están conectados. La primera entrada a cada mapa carga sus modelos, escenario y monstruos.</p></div><div class="travelgrid">'+GAME_MAPS.map((m,i)=>{const cur=i===currentMap,built=i===0||mapBuilt[i];return '<button class="mapcard'+(cur?' cur':'')+'" data-a="travel" data-v="'+i+'" style="--mc:'+m.color+'"><div class="mi">'+m.icon+'</div><div class="mn">'+m.name+'</div><div class="md">'+m.desc+'</div><div class="ms">'+(cur?'● Estás aquí':built?'Viajar':'Cargar y viajar')+'</div></button>';}).join('')+'</div></div>';};
+
+const _startPlay0=startPlay;
+startPlay=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);for(let i=0;i<AMB_N;i++)ambReset(i,true);} _startPlay0();P.y=mapWorldH(0,P.x,P.z);};
+const _toTitle0=toTitle;
+toTitle=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);} _toTitle0();P.y=mapWorldH(0,P.x,P.z);camX=P.x;camZ=P.z;camY=P.y;};
+resetWorld=function(){enemies.forEach(e=>{e.state='idle';e.hp=e.maxHp;e.x=e.hx;e.z=e.hz;e.y=mapWorldH(e.map||0,e.x,e.z);e.group.rotation.x=0;e.group.position.set(e.x,e.y,e.z);e.group.visible=(e.map||0)===currentMap;e.bar.visible=false;e.dotT=0;e.slam=null;e.stunT=0;e.provoked=false;});};
+const _revive0=revive;
+revive=function(){_revive0();P.y=mapWorldH(currentMap,P.x,P.z);burst(P.x,P.y+1,P.z,30,[1,.8,.5],5,.9,.3,-1);};
+
+/* =========================================================
+   DECORACIÓN EXTRA DE LOS 4 MAPAS NUEVOS
+   Caminos, lagos, bosques, ruinas, cementerios, hongos, cristales,
+   antorchas, campamentos y detalles de cada bioma. Todo con
+   InstancedMesh (pocas llamadas de dibujo) y sprites aditivos
+   en lugar de luces reales, para que corra bien en celular.
+   ========================================================= */
+const DEC={anim:[[],[],[],[],[]],glow:null,geo:null,moon:null,mat:{}};
+const DEC_LAKES=[{x:-48,z:26,r:13},{x:56,z:34,r:10},{x:-64,z:-34,r:9}];
+const DEC_PATHC=[null,[.6,.65,.72],[.4,.32,.28],[.56,.56,.6],[.5,.46,.37]];
+
+/* --- ampliar los modelos que cada mapa precarga --- */
+MAP_REQ[1].env.push('assets/nature/DeadTree_1.gltf','assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/dungeon/pillar.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[2].env.push('assets/nature/Rock_Medium_1.gltf','assets/dungeon/pillar.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[3].env.push('assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_1.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf');
+MAP_REQ[4].env.push('assets/nature/Pine_1.gltf','assets/nature/DeadTree_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/wall_archedwindow_gated_scaffold.gltf','assets/dungeon/barrel_large_decorated.gltf','assets/dungeon/floor_tile_extralarge_grates.gltf');
+
+/* --- lagos helados: el terreno se hunde un poco --- */
+const _mapLocalH1=mapLocalH;
+mapLocalH=function(mi,x,z){
+  let h=_mapLocalH1(mi,x,z);
+  if(mi===1){for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],d=Math.hypot(x-p.x,z-p.z),w=1-ss(p.r*.72,p.r+4,d);if(w>0)h=lerp(h,-.55,w);}}
+  return h;
+};
+
+/* --- caminos --- */
+function decSegD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l=dx*dx+dz*dz;let t=l?((px-ax)*dx+(pz-az)*dz)/l:0;t=t<0?0:t>1?1:t;const qx=ax+dx*t-px,qz=az+dz*t-pz;return Math.sqrt(qx*qx+qz*qz);}
+function decPathD(mi,x,z){
+  const bs=MAP_BOSSES[mi]||[],a=bs[0]||{x:-28,z:-72},b=bs[1]||{x:28,z:-72};
+  let d=decSegD(x,z,0,6,0,-38);
+  d=Math.min(d,decSegD(x,z,0,-38,a.x,a.z+9),decSegD(x,z,0,-38,b.x,b.z+9),decSegD(x,z,-86,12,-30,2),decSegD(x,z,-30,2,0,6),decSegD(x,z,0,6,30,2),decSegD(x,z,30,2,86,12));
+  return d+(vnoise(x*.16+5,z*.16-9)-.5)*2.2;
+}
+
+/* --- colores del terreno: caminos, parches de roca/ceniza/corrupción, hielo de los lagos --- */
+const _mapColorD=mapColor;
+mapColor=function(mi,x,z,h,out){
+  _mapColorD(mi,x,z,h,out);
+  if(mi===0)return out;
+  const big=vnoise(x*.045+mi*13,z*.045-mi*7),v=.86+.28*big;
+  let r=out.r*v,g=out.g*v,b=out.b*v;
+  if(mi===1){
+    const rk=ss(.66,.8,vnoise(x*.06+3,z*.06+8))*.7;r=lerp(r,.36,rk);g=lerp(g,.4,rk);b=lerp(b,.46,rk);
+    for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],w=1-ss(p.r*.6,p.r+1.2,Math.hypot(x-p.x,z-p.z));if(w>0){r=lerp(r,.5,w);g=lerp(g,.74,w);b=lerp(b,.88,w);}}
+  }else if(mi===2){
+    const ash=ss(.62,.8,vnoise(x*.07-9,z*.07+4))*.6;r=lerp(r,.3,ash);g=lerp(g,.28,ash);b=lerp(b,.28,ash);
+  }else if(mi===3){
+    const gr=ss(.64,.82,vnoise(x*.06+21,z*.06-5))*.55;r=lerp(r,.2,gr);g=lerp(g,.28,gr);b=lerp(b,.22,gr);
+  }else{
+    const co=ss(.68,.85,vnoise(x*.05-70,z*.05+30))*.7;r=lerp(r,.34,co);g=lerp(g,.16,co);b=lerp(b,.42,co);
+  }
+  const pw=1-ss(2,3.6,decPathD(mi,x,z));
+  if(pw>0){const pc=DEC_PATHC[mi],nn=.9+.2*vnoise(x*.9,z*.9);r=lerp(r,pc[0]*nn,pw*.9);g=lerp(g,pc[1]*nn,pw*.9);b=lerp(b,pc[2]*nn,pw*.9);}
+  out.setRGB(r,g,b);return out;
+};
+
+/* --- herramientas --- */
+function decGlowTex(){
+  if(DEC.glow)return DEC.glow;
+  const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.28,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gr;x.fillRect(0,0,64,64);DEC.glow=new THREE.CanvasTexture(c);return DEC.glow;
+}
+/* resplandor aditivo; anim: 'flame' parpadea, 'bob' flota, 'pulse' respira */
+function decGlow(mi,g,x,y,z,size,color,anim,op){
+  const m=new THREE.SpriteMaterial({map:decGlowTex(),color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:op||.9}),s=new THREE.Sprite(m);
+  s.position.set(x,y,z);s.scale.set(size,size,1);g.add(s);
+  if(anim)DEC.anim[mi].push({o:s,k:anim,ph:Math.random()*6.28,s0:size,y0:y,op0:m.opacity});
+  return s;
+}
+/* charco de luz en el suelo */
+function decPool(mi,g,x,z,r,color,op){
+  const m=new THREE.Mesh(PLANE,new THREE.MeshBasicMaterial({map:decGlowTex(),color:color,transparent:true,opacity:op||.5,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  m.scale.set(r*2,1,r*2);m.position.set(x,mapLocalH(mi,x,z)+.08,z);g.add(m);return m;
+}
+const _dM=new THREE.Matrix4(),_dQ=new THREE.Quaternion(),_dP=new THREE.Vector3(),_dS=new THREE.Vector3(),_dE=new THREE.Euler(),_dC=new THREE.Color();
+function decInst(g,geo,mat,list,shadow){
+  const im=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));
+  for(let i=0;i<list.length;i++){
+    const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);_dP.set(o.x,o.y,o.z);
+    const s=o.s||1;_dS.set(o.sx||s,o.sy||s,o.sz||s);_dM.compose(_dP,_dQ,_dS);im.setMatrixAt(i,_dM);
+    if(o.c!==undefined){_dC.setHex(o.c);im.setColorAt(i,_dC);}
+  }
+  im.count=list.length;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;
+  im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);return im;
+}
+/* modelos glTF en instancias (mucho más barato que clonar cada uno) */
+function decModelInst(mi,g,path,list,tint,shadow){
+  const gl=ENV_READY[path];if(!gl||!list.length)return;
+  gl.scene.updateMatrixWorld(true);
+  const parts=[];gl.scene.traverse(m=>{if(m.isMesh)parts.push(m);});
+  const tc=tint!==undefined?new THREE.Color(tint):null;
+  parts.forEach(m=>{
+    const src=Array.isArray(m.material)?m.material[0]:m.material,nm=src.clone();
+    if(tc&&nm.color)nm.color.lerp(tc,.34);
+    const im=new THREE.InstancedMesh(m.geometry,nm,list.length);
+    for(let i=0;i<list.length;i++){
+      const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);
+      _dP.set(o.x,o.y===undefined?mapLocalH(mi,o.x,o.z):o.y,o.z);_dS.setScalar(o.s||1);
+      _dM.compose(_dP,_dQ,_dS);_dM.multiply(m.matrixWorld);im.setMatrixAt(i,_dM);
+    }
+    im.count=list.length;im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);
+  });
+}
+/* une varias formas en una sola geometría con color por vértice */
+function decMerge(parts){
+  const pos=[],nor=[],col=[],uv=[],idx=[],m=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3(),c=new THREE.Color();let off=0;
+  parts.forEach(pt=>{
+    m.compose(new THREE.Vector3(pt.x||0,pt.y||0,pt.z||0),new THREE.Quaternion().setFromEuler(new THREE.Euler(pt.rx||0,pt.ry||0,pt.rz||0)),new THREE.Vector3(pt.sx||1,pt.sy||1,pt.sz||1));
+    nm.getNormalMatrix(m);c.setHex(pt.c);
+    const p=pt.g.attributes.position,n=pt.g.attributes.normal,u=pt.g.attributes.uv;
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyMatrix4(m);pos.push(v.x,v.y,v.z);
+      v.fromBufferAttribute(n,i).applyMatrix3(nm).normalize();nor.push(v.x,v.y,v.z);
+      col.push(c.r,c.g,c.b);uv.push(u?u.getX(i):0,u?u.getY(i):0);
+    }
+    const ix=pt.g.index.array;for(let i=0;i<ix.length;i++)idx.push(ix[i]+off);off+=p.count;
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+  return g;
+}
+/* puntos de colocación que respetan portal, arenas, caminos, lava y lagos */
+function decPts(mi,n,seed,o){
+  o=o||{};const R=rngMap(seed),out=[],bs=MAP_BOSSES[mi]||[],ext=o.ext||(LIMIT-4);let t=0;
+  while(out.length<n&&t<n*40){
+    t++;let x,z;
+    if(o.edge){const s=Math.floor(R()*4),a=(R()*2-1)*(HALF-6),d=LIMIT-1+R()*(o.edge||10);if(s===0){x=a;z=-d;}else if(s===1){x=a;z=d;}else if(s===2){x=-d;z=a;}else{x=d;z=a;}}
+    else{x=(R()*2-1)*ext;z=(R()*2-1)*ext;
+      if(Math.hypot(x,z-6)<(o.safe||17))continue;
+      if(bs.some(b=>Math.hypot(x-b.x,z-b.z)<(o.arena||15)))continue;
+      if(!o.onPath&&decPathD(mi,x,z)<(o.pw===undefined?4.5:o.pw))continue;
+      if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lava||4)))continue;
+      if(mi===1&&DEC_LAKES.some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lake||3)))continue;
+    }
+    if(o.test&&!o.test(x,z,R))continue;
+    if(o.gap&&out.some(q=>Math.hypot(q.x-x,q.z-z)<o.gap))continue;
+    out.push({x:x,z:z,r:R()});
+  }
+  return out;
+}
+
+/* --- geometrías y materiales compartidos --- */
+function decG(){
+  if(DEC.geo)return DEC.geo;
+  const G={};
+  function rock(seed){
+    const g=new THREE.SphereGeometry(1,14,10),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+      const n=vnoise(x*1.7+seed,z*1.7+y*1.3-seed)*.55+vnoise(x*4+seed*2,y*4-z*4)*.25,k=.78+n*.62;
+      x*=k;y*=k;z*=k;if(y<-.3)y=-.3+(y+.3)*.15;p.setXYZ(i,x,y,z);
+    }
+    g.computeVertexNormals();return g;
+  }
+  G.rocks=[rock(1),rock(7),rock(13),rock(21)];
+  G.crystal=new THREE.LatheGeometry([new THREE.Vector2(0,0),new THREE.Vector2(.5,.05),new THREE.Vector2(.55,.6),new THREE.Vector2(.3,1),new THREE.Vector2(0,1.4)],6);
+  G.spike=new THREE.ConeGeometry(.5,1,7,1).translate(0,.5,0);
+  G.tuft=new THREE.ConeGeometry(.1,1,4,1).translate(0,.5,0);
+  G.mound=new THREE.SphereGeometry(1,12,8);
+  G.log=new THREE.CylinderGeometry(.28,.32,1,8).rotateZ(Math.PI/2);
+  G.egg=new THREE.SphereGeometry(.5,12,10);
+  G.peak=(function(){
+    const g=new THREE.ConeGeometry(.5,1,9,5).translate(0,.5,0),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=1+(vnoise(x*5+y*3,z*5-y*3)-.5)*.5*(1-y);p.setXYZ(i,x*k,y,z*k);}
+    g.computeVertexNormals();return g;
+  })();
+  G.rib=new THREE.TorusGeometry(1,.07,6,18,Math.PI);
+  G.obelisk=new THREE.CylinderGeometry(.3,.7,1,4).translate(0,.5,0);
+  G.rune=new THREE.BoxGeometry(.16,.55,.04);
+  G.vent=new THREE.LatheGeometry([new THREE.Vector2(1.5,0),new THREE.Vector2(.95,.65),new THREE.Vector2(.62,.95),new THREE.Vector2(.4,.82)],9);
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),C=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s||10),S=(r,w,h)=>new THREE.SphereGeometry(r,w||12,h||8);
+  G.tomb=decMerge([{g:B(.95,1.1,.3),y:.55,c:0x8a8f92},{g:C(.475,.475,.3,14),rx:Math.PI/2,y:1.1,c:0x8a8f92}]);
+  G.cross=decMerge([{g:B(.22,1.6,.22),y:.8,c:0x777b7f},{g:B(.85,.22,.22),y:1.1,c:0x777b7f}]);
+  G.torch=decMerge([{g:C(.07,.1,2.3,6),y:1.15,c:0x6a4c34},{g:C(.32,.16,.3,8),y:2.4,c:0x2c2c30}]);
+  G.brazier=decMerge([{g:C(.04,.06,1.2,5),y:.5,x:.32,rz:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:.28,rz:.14,rx:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:-.28,rz:.14,rx:.28,c:0x2a2a2e},{g:C(.6,.34,.4,10),y:1.15,c:0x3a3a40},{g:C(.5,.5,.06,10),y:1.34,c:0x1a1214}]);
+  G.tent=decMerge([{g:new THREE.ConeGeometry(2.3,2.9,4),y:1.45,ry:Math.PI/4,c:0xc4ab82},{g:C(.05,.05,1.2,5),y:3.2,c:0x4a3626},{g:B(.9,1.6,.12),y:.8,z:1.5
+
+===== function spawnMapPopulation(mi) =====
+function spawnMapPopulation(mi){const R=rngMap(7000+mi);function wave(t,n,test){let c=0,k=0;while(c<n&&k<n*80){k++;const x=(R()*2-1)*(LIMIT-7),z=(R()*2-1)*(LIMIT-7);if(Math.hypot(x,z-6)<22||z<-56||!test(x,z))continue;if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+4))continue;spawnEnemy(t,x,z,undefined,mi);c++;}}
+  if(mi===1){wave('frost_orc',12,()=>true);wave('frost_tribal',10,(x,z)=>x<35);wave('yeti',7,(x,z)=>Math.abs(x)>24||z<0);spawnEnemy('yeti_glacial',-28,-72,12,mi);spawnEnemy('yeti_alfa',28,-72,14,mi);}
+  else if(mi===2){wave('dino_fire',11,()=>true);wave('armabee_fire',11,()=>true);wave('goleling_fire',8,(x,z)=>Math.abs(x)>20);spawnEnemy('dragon_ancient',-30,-72,16,mi);spawnEnemy('dragon_evolved',30,-72,18,mi);}
+  else if(mi===3){wave('ghost_mob',14,()=>true);wave('orc_skull',13,(x,z)=>z<30);spawnEnemy('ghost_skull_lord',-28,-72,20,mi);spawnEnemy('skull_warlord',28,-72,22,mi);}
+  else{wave('ruin_orc',12,()=>true);wave('mushroom_corrupt',10,(x,z)=>x<35);wave('golem_guard',9,(x,z)=>Math.abs(x)>18);spawnEnemy('golem_evolved_boss',-30,-72,24,mi);spawnEnemy('blue_demon_boss',30,-72,26,mi);}
+}
+async function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}
+function clearTransientWorld(){P.target=null;P.dest=null;P.engaged=false;atkHeld=false;for(let i=drops.length-1;i>=0;i--){scene.remove(drops[i].g);drops.splice(i,1);}for(let i=projectiles.length-1;i>=0;i--){if(projectiles[i].g)scene.remove(projectiles[i].g);projectiles.splice(i,1);}later.length=0;}
+function setMapVisibility(mi){for(let i=1;i<mapGroups.length;i++)if(mapGroups[i])mapGroups[i].visible=(i===mi);enemies.forEach(e=>{if(e.map!==undefined){e.group.visible=e.map===mi&&!(e.state==='dead'&&e.deadT>=1.4);e.bar.visible=false;}});}
+function mapLoad(show,mi){const el=$('#mapLoad');if(!el)return;el.hidden=!show;if(show){$('#mapLoadIcon').textContent=GAME_MAPS[mi].icon;$('#mapLoadName').textContent='Viajando a '+GAME_MAPS[mi].name+'…';}}
+async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
+
+travelPanelHTML=function(){return '<div class="tabs"><button class="on">Viajar</button><button class="x" data-a="close" aria-label="Cerrar">✕</button></div><div class="pb"><div class="travelhead"><h3>Mapa del Reino</h3><p>Los cinco destinos están conectados. La primera entrada a cada mapa carga sus modelos, escenario y monstruos.</p></div><div class="travelgrid">'+GAME_MAPS.map((m,i)=>{const cur=i===currentMap,built=i===0||mapBuilt[i];return '<button class="mapcard'+(cur?' cur':'')+'" data-a="travel" data-v="'+i+'" style="--mc:'+m.color+'"><div class="mi">'+m.icon+'</div><div class="mn">'+m.name+'</div><div class="md">'+m.desc+'</div><div class="ms">'+(cur?'● Estás aquí':built?'Viajar':'Cargar y viajar')+'</div></button>';}).join('')+'</div></div>';};
+
+const _startPlay0=startPlay;
+startPlay=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);for(let i=0;i<AMB_N;i++)ambReset(i,true);} _startPlay0();P.y=mapWorldH(0,P.x,P.z);};
+const _toTitle0=toTitle;
+toTitle=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);} _toTitle0();P.y=mapWorldH(0,P.x,P.z);camX=P.x;camZ=P.z;camY=P.y;};
+resetWorld=function(){enemies.forEach(e=>{e.state='idle';e.hp=e.maxHp;e.x=e.hx;e.z=e.hz;e.y=mapWorldH(e.map||0,e.x,e.z);e.group.rotation.x=0;e.group.position.set(e.x,e.y,e.z);e.group.visible=(e.map||0)===currentMap;e.bar.visible=false;e.dotT=0;e.slam=null;e.stunT=0;e.provoked=false;});};
+const _revive0=revive;
+revive=function(){_revive0();P.y=mapWorldH(currentMap,P.x,P.z);burst(P.x,P.y+1,P.z,30,[1,.8,.5],5,.9,.3,-1);};
+
+/* =========================================================
+   DECORACIÓN EXTRA DE LOS 4 MAPAS NUEVOS
+   Caminos, lagos, bosques, ruinas, cementerios, hongos, cristales,
+   antorchas, campamentos y detalles de cada bioma. Todo con
+   InstancedMesh (pocas llamadas de dibujo) y sprites aditivos
+   en lugar de luces reales, para que corra bien en celular.
+   ========================================================= */
+const DEC={anim:[[],[],[],[],[]],glow:null,geo:null,moon:null,mat:{}};
+const DEC_LAKES=[{x:-48,z:26,r:13},{x:56,z:34,r:10},{x:-64,z:-34,r:9}];
+const DEC_PATHC=[null,[.6,.65,.72],[.4,.32,.28],[.56,.56,.6],[.5,.46,.37]];
+
+/* --- ampliar los modelos que cada mapa precarga --- */
+MAP_REQ[1].env.push('assets/nature/DeadTree_1.gltf','assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/dungeon/pillar.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[2].env.push('assets/nature/Rock_Medium_1.gltf','assets/dungeon/pillar.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[3].env.push('assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_1.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf');
+MAP_REQ[4].env.push('assets/nature/Pine_1.gltf','assets/nature/DeadTree_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/wall_archedwindow_gated_scaffold.gltf','assets/dungeon/barrel_large_decorated.gltf','assets/dungeon/floor_tile_extralarge_grates.gltf');
+
+/* --- lagos helados: el terreno se hunde un poco --- */
+const _mapLocalH1=mapLocalH;
+mapLocalH=function(mi,x,z){
+  let h=_mapLocalH1(mi,x,z);
+  if(mi===1){for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],d=Math.hypot(x-p.x,z-p.z),w=1-ss(p.r*.72,p.r+4,d);if(w>0)h=lerp(h,-.55,w);}}
+  return h;
+};
+
+/* --- caminos --- */
+function decSegD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l=dx*dx+dz*dz;let t=l?((px-ax)*dx+(pz-az)*dz)/l:0;t=t<0?0:t>1?1:t;const qx=ax+dx*t-px,qz=az+dz*t-pz;return Math.sqrt(qx*qx+qz*qz);}
+function decPathD(mi,x,z){
+  const bs=MAP_BOSSES[mi]||[],a=bs[0]||{x:-28,z:-72},b=bs[1]||{x:28,z:-72};
+  let d=decSegD(x,z,0,6,0,-38);
+  d=Math.min(d,decSegD(x,z,0,-38,a.x,a.z+9),decSegD(x,z,0,-38,b.x,b.z+9),decSegD(x,z,-86,12,-30,2),decSegD(x,z,-30,2,0,6),decSegD(x,z,0,6,30,2),decSegD(x,z,30,2,86,12));
+  return d+(vnoise(x*.16+5,z*.16-9)-.5)*2.2;
+}
+
+/* --- colores del terreno: caminos, parches de roca/ceniza/corrupción, hielo de los lagos --- */
+const _mapColorD=mapColor;
+mapColor=function(mi,x,z,h,out){
+  _mapColorD(mi,x,z,h,out);
+  if(mi===0)return out;
+  const big=vnoise(x*.045+mi*13,z*.045-mi*7),v=.86+.28*big;
+  let r=out.r*v,g=out.g*v,b=out.b*v;
+  if(mi===1){
+    const rk=ss(.66,.8,vnoise(x*.06+3,z*.06+8))*.7;r=lerp(r,.36,rk);g=lerp(g,.4,rk);b=lerp(b,.46,rk);
+    for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],w=1-ss(p.r*.6,p.r+1.2,Math.hypot(x-p.x,z-p.z));if(w>0){r=lerp(r,.5,w);g=lerp(g,.74,w);b=lerp(b,.88,w);}}
+  }else if(mi===2){
+    const ash=ss(.62,.8,vnoise(x*.07-9,z*.07+4))*.6;r=lerp(r,.3,ash);g=lerp(g,.28,ash);b=lerp(b,.28,ash);
+  }else if(mi===3){
+    const gr=ss(.64,.82,vnoise(x*.06+21,z*.06-5))*.55;r=lerp(r,.2,gr);g=lerp(g,.28,gr);b=lerp(b,.22,gr);
+  }else{
+    const co=ss(.68,.85,vnoise(x*.05-70,z*.05+30))*.7;r=lerp(r,.34,co);g=lerp(g,.16,co);b=lerp(b,.42,co);
+  }
+  const pw=1-ss(2,3.6,decPathD(mi,x,z));
+  if(pw>0){const pc=DEC_PATHC[mi],nn=.9+.2*vnoise(x*.9,z*.9);r=lerp(r,pc[0]*nn,pw*.9);g=lerp(g,pc[1]*nn,pw*.9);b=lerp(b,pc[2]*nn,pw*.9);}
+  out.setRGB(r,g,b);return out;
+};
+
+/* --- herramientas --- */
+function decGlowTex(){
+  if(DEC.glow)return DEC.glow;
+  const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.28,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gr;x.fillRect(0,0,64,64);DEC.glow=new THREE.CanvasTexture(c);return DEC.glow;
+}
+/* resplandor aditivo; anim: 'flame' parpadea, 'bob' flota, 'pulse' respira */
+function decGlow(mi,g,x,y,z,size,color,anim,op){
+  const m=new THREE.SpriteMaterial({map:decGlowTex(),color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:op||.9}),s=new THREE.Sprite(m);
+  s.position.set(x,y,z);s.scale.set(size,size,1);g.add(s);
+  if(anim)DEC.anim[mi].push({o:s,k:anim,ph:Math.random()*6.28,s0:size,y0:y,op0:m.opacity});
+  return s;
+}
+/* charco de luz en el suelo */
+function decPool(mi,g,x,z,r,color,op){
+  const m=new THREE.Mesh(PLANE,new THREE.MeshBasicMaterial({map:decGlowTex(),color:color,transparent:true,opacity:op||.5,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  m.scale.set(r*2,1,r*2);m.position.set(x,mapLocalH(mi,x,z)+.08,z);g.add(m);return m;
+}
+const _dM=new THREE.Matrix4(),_dQ=new THREE.Quaternion(),_dP=new THREE.Vector3(),_dS=new THREE.Vector3(),_dE=new THREE.Euler(),_dC=new THREE.Color();
+function decInst(g,geo,mat,list,shadow){
+  const im=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));
+  for(let i=0;i<list.length;i++){
+    const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);_dP.set(o.x,o.y,o.z);
+    const s=o.s||1;_dS.set(o.sx||s,o.sy||s,o.sz||s);_dM.compose(_dP,_dQ,_dS);im.setMatrixAt(i,_dM);
+    if(o.c!==undefined){_dC.setHex(o.c);im.setColorAt(i,_dC);}
+  }
+  im.count=list.length;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;
+  im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);return im;
+}
+/* modelos glTF en instancias (mucho más barato que clonar cada uno) */
+function decModelInst(mi,g,path,list,tint,shadow){
+  const gl=ENV_READY[path];if(!gl||!list.length)return;
+  gl.scene.updateMatrixWorld(true);
+  const parts=[];gl.scene.traverse(m=>{if(m.isMesh)parts.push(m);});
+  const tc=tint!==undefined?new THREE.Color(tint):null;
+  parts.forEach(m=>{
+    const src=Array.isArray(m.material)?m.material[0]:m.material,nm=src.clone();
+    if(tc&&nm.color)nm.color.lerp(tc,.34);
+    const im=new THREE.InstancedMesh(m.geometry,nm,list.length);
+    for(let i=0;i<list.length;i++){
+      const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);
+      _dP.set(o.x,o.y===undefined?mapLocalH(mi,o.x,o.z):o.y,o.z);_dS.setScalar(o.s||1);
+      _dM.compose(_dP,_dQ,_dS);_dM.multiply(m.matrixWorld);im.setMatrixAt(i,_dM);
+    }
+    im.count=list.length;im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);
+  });
+}
+/* une varias formas en una sola geometría con color por vértice */
+function decMerge(parts){
+  const pos=[],nor=[],col=[],uv=[],idx=[],m=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3(),c=new THREE.Color();let off=0;
+  parts.forEach(pt=>{
+    m.compose(new THREE.Vector3(pt.x||0,pt.y||0,pt.z||0),new THREE.Quaternion().setFromEuler(new THREE.Euler(pt.rx||0,pt.ry||0,pt.rz||0)),new THREE.Vector3(pt.sx||1,pt.sy||1,pt.sz||1));
+    nm.getNormalMatrix(m);c.setHex(pt.c);
+    const p=pt.g.attributes.position,n=pt.g.attributes.normal,u=pt.g.attributes.uv;
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyMatrix4(m);pos.push(v.x,v.y,v.z);
+      v.fromBufferAttribute(n,i).applyMatrix3(nm).normalize();nor.push(v.x,v.y,v.z);
+      col.push(c.r,c.g,c.b);uv.push(u?u.getX(i):0,u?u.getY(i):0);
+    }
+    const ix=pt.g.index.array;for(let i=0;i<ix.length;i++)idx.push(ix[i]+off);off+=p.count;
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+  return g;
+}
+/* puntos de colocación que respetan portal, arenas, caminos, lava y lagos */
+function decPts(mi,n,seed,o){
+  o=o||{};const R=rngMap(seed),out=[],bs=MAP_BOSSES[mi]||[],ext=o.ext||(LIMIT-4);let t=0;
+  while(out.length<n&&t<n*40){
+    t++;let x,z;
+    if(o.edge){const s=Math.floor(R()*4),a=(R()*2-1)*(HALF-6),d=LIMIT-1+R()*(o.edge||10);if(s===0){x=a;z=-d;}else if(s===1){x=a;z=d;}else if(s===2){x=-d;z=a;}else{x=d;z=a;}}
+    else{x=(R()*2-1)*ext;z=(R()*2-1)*ext;
+      if(Math.hypot(x,z-6)<(o.safe||17))continue;
+      if(bs.some(b=>Math.hypot(x-b.x,z-b.z)<(o.arena||15)))continue;
+      if(!o.onPath&&decPathD(mi,x,z)<(o.pw===undefined?4.5:o.pw))continue;
+      if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lava||4)))continue;
+      if(mi===1&&DEC_LAKES.some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lake||3)))continue;
+    }
+    if(o.test&&!o.test(x,z,R))continue;
+    if(o.gap&&out.some(q=>Math.hypot(q.x-x,q.z-z)<o.gap))continue;
+    out.push({x:x,z:z,r:R()});
+  }
+  return out;
+}
+
+/* --- geometrías y materiales compartidos --- */
+function decG(){
+  if(DEC.geo)return DEC.geo;
+  const G={};
+  function rock(seed){
+    const g=new THREE.SphereGeometry(1,14,10),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+      const n=vnoise(x*1.7+seed,z*1.7+y*1.3-seed)*.55+vnoise(x*4+seed*2,y*4-z*4)*.25,k=.78+n*.62;
+      x*=k;y*=k;z*=k;if(y<-.3)y=-.3+(y+.3)*.15;p.setXYZ(i,x,y,z);
+    }
+    g.computeVertexNormals();return g;
+  }
+  G.rocks=[rock(1),rock(7),rock(13),rock(21)];
+  G.crystal=new THREE.LatheGeometry([new THREE.Vector2(0,0),new THREE.Vector2(.5,.05),new THREE.Vector2(.55,.6),new THREE.Vector2(.3,1),new THREE.Vector2(0,1.4)],6);
+  G.spike=new THREE.ConeGeometry(.5,1,7,1).translate(0,.5,0);
+  G.tuft=new THREE.ConeGeometry(.1,1,4,1).translate(0,.5,0);
+  G.mound=new THREE.SphereGeometry(1,12,8);
+  G.log=new THREE.CylinderGeometry(.28,.32,1,8).rotateZ(Math.PI/2);
+  G.egg=new THREE.SphereGeometry(.5,12,10);
+  G.peak=(function(){
+    const g=new THREE.ConeGeometry(.5,1,9,5).translate(0,.5,0),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=1+(vnoise(x*5+y*3,z*5-y*3)-.5)*.5*(1-y);p.setXYZ(i,x*k,y,z*k);}
+    g.computeVertexNormals();return g;
+  })();
+  G.rib=new THREE.TorusGeometry(1,.07,6,18,Math.PI);
+  G.obelisk=new THREE.CylinderGeometry(.3,.7,1,4).translate(0,.5,0);
+  G.rune=new THREE.BoxGeometry(.16,.55,.04);
+  G.vent=new THREE.LatheGeometry([new THREE.Vector2(1.5,0),new THREE.Vector2(.95,.65),new THREE.Vector2(.62,.95),new THREE.Vector2(.4,.82)],9);
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),C=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s||10),S=(r,w,h)=>new THREE.SphereGeometry(r,w||12,h||8);
+  G.tomb=decMerge([{g:B(.95,1.1,.3),y:.55,c:0x8a8f92},{g:C(.475,.475,.3,14),rx:Math.PI/2,y:1.1,c:0x8a8f92}]);
+  G.cross=decMerge([{g:B(.22,1.6,.22),y:.8,c:0x777b7f},{g:B(.85,.22,.22),y:1.1,c:0x777b7f}]);
+  G.torch=decMerge([{g:C(.07,.1,2.3,6),y:1.15,c:0x6a4c34},{g:C(.32,.16,.3,8),y:2.4,c:0x2c2c30}]);
+  G.brazier=decMerge([{g:C(.04,.06,1.2,5),y:.5,x:.32,rz:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:.28,rz:.14,rx:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:-.28,rz:.14,rx:.28,c:0x2a2a2e},{g:C(.6,.34,.4,10),y:1.15,c:0x3a3a40},{g:C(.5,.5,.06,10),y:1.34,c:0x1a1214}]);
+  G.tent=decMerge([{g:new THREE.ConeGeometry(2.3,2.9,4),y:1.45,ry:Math.PI/4,c:0xc4ab82},{g:C(.05,.05,1.2,5),y:3.2,c:0x4a3626},{g:B(.9,1.6,.12),y:.8,z:1.55,ry:0,rx:-.5,c:0x2a1f18}]);
+  G.igloo=decMerge([{g:new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI/2),sx:2.3,sy:1.8,sz:2.3,c:0xeef6fc},{g:C(.75,.75,1.4,10),rx:Math.PI/2,y:.55,z:2.1,c:0xe4f0f8},{g:C(.5,.5,.2,10),rx:Math.PI/2,y:.5,z:2.85,c:0x1a2430}]);
+  G.skull=decMerge([{g:S(.5,10,8),sx:1,sy:.85,sz:1.1,y:.5,c:0xe8e0cc},{g:B(.55,.16,.5),y:.18,z:.3,c:0xdcd3bd},{g:S(.12,6,5),x:.2,y:.56,z:.42,c:0x161616},{g:S(.12,6,5),x:-.2,y:.56,z:.42,c:0x161616}]);
+  G.mausoleum=decMerge([{g:B(5,3.4,5.6),y:1.7,c:0x80868a},{g:new THREE.ConeGeometry(4.4,2.2,4),y:4.5,ry:Math.PI/4,c:0x555d62},{g:B(1.5,2.4,.4),y:1.2,z:2.8,c:0x080c0e},{g:C(.28,.32,3.4,8),x:-1.2,y:1.7,z:3,c:0x9aa0a3},{g:C(.28,.32,3.4,8),x:1.2,y:1.7,z:3,c:0x9aa0a3}]);
+  G.banner=decMerge([{g:C(.07,.09,4.8,6),y:2.4,c:0x5a4230},{g:B(1.2,2,.06),x:.65,y:3.7,c:0xffffff}]);
+  G.barrow=decMerge([{g:B(1.4,.7,2.2),y:.35,c:0x5c4630},{g:B(1.5,.12,2.3),y:.74,c:0x3d2e1f}]);
+  function mush(cap,spot){const parts=[{g:C(.2,.3,1.1,10),y:.55,c:0xe9ddc2},{g:new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI/2),sx:.9,sy:.6,sz:.9,y:1.05,c:cap}];for(let i=0;i<6;i++){const a=i/6*Math.PI*2+.4,rr=.42+(i%2)*.15;parts.push({g:S(.1,6,5),x:Math.cos(a)*rr,z:Math.sin(a)*rr,y:1.05+.6*Math.sqrt(Math.max(0,1-Math.pow(rr/.9,2)))-.02,c:spot});}return decMerge(parts);}
+  G.mushA=mush(0x8a4cc0,0xf6e9a0);G.mushB=mush(0x2fa59a,0xd8fff0);G.mushC=mush(0xb04a6a,0xffe9d0);
+  DEC.geo=G;return G;
+}
+function decMat(k){
+  if(DEC.mat[k])return DEC.mat[k];
+  const T=THREE,tex=groundTex;let m;
+  if(k==='rock')m=new T.MeshPhongMaterial({color:0xffffff,shininess:5,specular:0x222222,map:tex});
+  else if(k==='vc2')m=new T.MeshPhongMaterial({color:0xffffff,shininess:6,specular:0x111111});
+  else if(k==='snow')m=new T.MeshPhongMaterial({color:0xffffff,shininess:30,specular:0x8899aa});
+  else if(k==='vc')m=new T.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:6,specular:0x111111});
+  else if(k==='vcGlow')m=new T.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:6,emissive:0x2a1048});
+  else if(k==='tuft')m=new T.MeshPhongMaterial({color:0xffffff,shininess:0,side:T.DoubleSide});
+  else if(k==='ice')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0x1c4a74,flatShading:true,shininess:90
+
+===== function ensureMap =====
+function ensureMap(mi){if(mapBuilt[mi])return;await prepareMapAssets(mi);const g=new THREE.Group();g.position.y=MAP_Y[mi];g.visible=false;scene.add(g);const terr=makeTerrain(mi);g.add(terr);mapGroups[mi]=g;mapTerrains[mi]=terr;buildScenery(mi,g);spawnMapPopulation(mi);mapBuilt[mi]=true;}
+function clearTransientWorld(){P.target=null;P.dest=null;P.engaged=false;atkHeld=false;for(let i=drops.length-1;i>=0;i--){scene.remove(drops[i].g);drops.splice(i,1);}for(let i=projectiles.length-1;i>=0;i--){if(projectiles[i].g)scene.remove(projectiles[i].g);projectiles.splice(i,1);}later.length=0;}
+function setMapVisibility(mi){for(let i=1;i<mapGroups.length;i++)if(mapGroups[i])mapGroups[i].visible=(i===mi);enemies.forEach(e=>{if(e.map!==undefined){e.group.visible=e.map===mi&&!(e.state==='dead'&&e.deadT>=1.4);e.bar.visible=false;}});}
+function mapLoad(show,mi){const el=$('#mapLoad');if(!el)return;el.hidden=!show;if(show){$('#mapLoadIcon').textContent=GAME_MAPS[mi].icon;$('#mapLoadName').textContent='Viajando a '+GAME_MAPS[mi].name+'…';}}
+async function travelTo(mi){if(mi===currentMap||state!=='play'||P.dead)return;mapLoad(true,mi);try{await ensureMap(mi);clearTransientWorld();currentMap=mi;activeTerrain=mapTerrains[mi]||terrain;setMapVisibility(mi);P.x=0;P.z=6;P.y=mapWorldH(mi,0,6);P.face=Math.PI;P.vx=P.vz=0;camX=P.x;camZ=P.z;camY=P.y;curBiome='';rebuildMiniBase(mi);for(let i=0;i<AMB_N;i++)ambReset(i,true);zoneCheck();toast('Llegaste a '+GAME_MAPS[mi].name,'#d9b36a');}catch(err){console.error(err);toast('No se pudo cargar ese mapa. Revisa que la carpeta assets esté junto a index.html.','#e5655a');}finally{mapLoad(false,mi);}}
+
+travelPanelHTML=function(){return '<div class="tabs"><button class="on">Viajar</button><button class="x" data-a="close" aria-label="Cerrar">✕</button></div><div class="pb"><div class="travelhead"><h3>Mapa del Reino</h3><p>Los cinco destinos están conectados. La primera entrada a cada mapa carga sus modelos, escenario y monstruos.</p></div><div class="travelgrid">'+GAME_MAPS.map((m,i)=>{const cur=i===currentMap,built=i===0||mapBuilt[i];return '<button class="mapcard'+(cur?' cur':'')+'" data-a="travel" data-v="'+i+'" style="--mc:'+m.color+'"><div class="mi">'+m.icon+'</div><div class="mn">'+m.name+'</div><div class="md">'+m.desc+'</div><div class="ms">'+(cur?'● Estás aquí':built?'Viajar':'Cargar y viajar')+'</div></button>';}).join('')+'</div></div>';};
+
+const _startPlay0=startPlay;
+startPlay=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);for(let i=0;i<AMB_N;i++)ambReset(i,true);} _startPlay0();P.y=mapWorldH(0,P.x,P.z);};
+const _toTitle0=toTitle;
+toTitle=function(){if(currentMap!==0){currentMap=0;activeTerrain=terrain;setMapVisibility(0);rebuildMiniBase(0);} _toTitle0();P.y=mapWorldH(0,P.x,P.z);camX=P.x;camZ=P.z;camY=P.y;};
+resetWorld=function(){enemies.forEach(e=>{e.state='idle';e.hp=e.maxHp;e.x=e.hx;e.z=e.hz;e.y=mapWorldH(e.map||0,e.x,e.z);e.group.rotation.x=0;e.group.position.set(e.x,e.y,e.z);e.group.visible=(e.map||0)===currentMap;e.bar.visible=false;e.dotT=0;e.slam=null;e.stunT=0;e.provoked=false;});};
+const _revive0=revive;
+revive=function(){_revive0();P.y=mapWorldH(currentMap,P.x,P.z);burst(P.x,P.y+1,P.z,30,[1,.8,.5],5,.9,.3,-1);};
+
+/* =========================================================
+   DECORACIÓN EXTRA DE LOS 4 MAPAS NUEVOS
+   Caminos, lagos, bosques, ruinas, cementerios, hongos, cristales,
+   antorchas, campamentos y detalles de cada bioma. Todo con
+   InstancedMesh (pocas llamadas de dibujo) y sprites aditivos
+   en lugar de luces reales, para que corra bien en celular.
+   ========================================================= */
+const DEC={anim:[[],[],[],[],[]],glow:null,geo:null,moon:null,mat:{}};
+const DEC_LAKES=[{x:-48,z:26,r:13},{x:56,z:34,r:10},{x:-64,z:-34,r:9}];
+const DEC_PATHC=[null,[.6,.65,.72],[.4,.32,.28],[.56,.56,.6],[.5,.46,.37]];
+
+/* --- ampliar los modelos que cada mapa precarga --- */
+MAP_REQ[1].env.push('assets/nature/DeadTree_1.gltf','assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_3.gltf','assets/dungeon/pillar.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[2].env.push('assets/nature/Rock_Medium_1.gltf','assets/dungeon/pillar.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/barrel_large_decorated.gltf');
+MAP_REQ[3].env.push('assets/nature/TwistedTree_4.gltf','assets/nature/Rock_Medium_1.gltf','assets/nature/Rock_Medium_3.gltf','assets/medieval/Wall_Arch.gltf');
+MAP_REQ[4].env.push('assets/nature/Pine_1.gltf','assets/nature/DeadTree_1.gltf','assets/nature/Rock_Medium_1.gltf','assets/dungeon/wall_corner.gltf','assets/dungeon/wall_archedwindow_gated_scaffold.gltf','assets/dungeon/barrel_large_decorated.gltf','assets/dungeon/floor_tile_extralarge_grates.gltf');
+
+/* --- lagos helados: el terreno se hunde un poco --- */
+const _mapLocalH1=mapLocalH;
+mapLocalH=function(mi,x,z){
+  let h=_mapLocalH1(mi,x,z);
+  if(mi===1){for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],d=Math.hypot(x-p.x,z-p.z),w=1-ss(p.r*.72,p.r+4,d);if(w>0)h=lerp(h,-.55,w);}}
+  return h;
+};
+
+/* --- caminos --- */
+function decSegD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l=dx*dx+dz*dz;let t=l?((px-ax)*dx+(pz-az)*dz)/l:0;t=t<0?0:t>1?1:t;const qx=ax+dx*t-px,qz=az+dz*t-pz;return Math.sqrt(qx*qx+qz*qz);}
+function decPathD(mi,x,z){
+  const bs=MAP_BOSSES[mi]||[],a=bs[0]||{x:-28,z:-72},b=bs[1]||{x:28,z:-72};
+  let d=decSegD(x,z,0,6,0,-38);
+  d=Math.min(d,decSegD(x,z,0,-38,a.x,a.z+9),decSegD(x,z,0,-38,b.x,b.z+9),decSegD(x,z,-86,12,-30,2),decSegD(x,z,-30,2,0,6),decSegD(x,z,0,6,30,2),decSegD(x,z,30,2,86,12));
+  return d+(vnoise(x*.16+5,z*.16-9)-.5)*2.2;
+}
+
+/* --- colores del terreno: caminos, parches de roca/ceniza/corrupción, hielo de los lagos --- */
+const _mapColorD=mapColor;
+mapColor=function(mi,x,z,h,out){
+  _mapColorD(mi,x,z,h,out);
+  if(mi===0)return out;
+  const big=vnoise(x*.045+mi*13,z*.045-mi*7),v=.86+.28*big;
+  let r=out.r*v,g=out.g*v,b=out.b*v;
+  if(mi===1){
+    const rk=ss(.66,.8,vnoise(x*.06+3,z*.06+8))*.7;r=lerp(r,.36,rk);g=lerp(g,.4,rk);b=lerp(b,.46,rk);
+    for(let i=0;i<DEC_LAKES.length;i++){const p=DEC_LAKES[i],w=1-ss(p.r*.6,p.r+1.2,Math.hypot(x-p.x,z-p.z));if(w>0){r=lerp(r,.5,w);g=lerp(g,.74,w);b=lerp(b,.88,w);}}
+  }else if(mi===2){
+    const ash=ss(.62,.8,vnoise(x*.07-9,z*.07+4))*.6;r=lerp(r,.3,ash);g=lerp(g,.28,ash);b=lerp(b,.28,ash);
+  }else if(mi===3){
+    const gr=ss(.64,.82,vnoise(x*.06+21,z*.06-5))*.55;r=lerp(r,.2,gr);g=lerp(g,.28,gr);b=lerp(b,.22,gr);
+  }else{
+    const co=ss(.68,.85,vnoise(x*.05-70,z*.05+30))*.7;r=lerp(r,.34,co);g=lerp(g,.16,co);b=lerp(b,.42,co);
+  }
+  const pw=1-ss(2,3.6,decPathD(mi,x,z));
+  if(pw>0){const pc=DEC_PATHC[mi],nn=.9+.2*vnoise(x*.9,z*.9);r=lerp(r,pc[0]*nn,pw*.9);g=lerp(g,pc[1]*nn,pw*.9);b=lerp(b,pc[2]*nn,pw*.9);}
+  out.setRGB(r,g,b);return out;
+};
+
+/* --- herramientas --- */
+function decGlowTex(){
+  if(DEC.glow)return DEC.glow;
+  const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.28,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gr;x.fillRect(0,0,64,64);DEC.glow=new THREE.CanvasTexture(c);return DEC.glow;
+}
+/* resplandor aditivo; anim: 'flame' parpadea, 'bob' flota, 'pulse' respira */
+function decGlow(mi,g,x,y,z,size,color,anim,op){
+  const m=new THREE.SpriteMaterial({map:decGlowTex(),color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:op||.9}),s=new THREE.Sprite(m);
+  s.position.set(x,y,z);s.scale.set(size,size,1);g.add(s);
+  if(anim)DEC.anim[mi].push({o:s,k:anim,ph:Math.random()*6.28,s0:size,y0:y,op0:m.opacity});
+  return s;
+}
+/* charco de luz en el suelo */
+function decPool(mi,g,x,z,r,color,op){
+  const m=new THREE.Mesh(PLANE,new THREE.MeshBasicMaterial({map:decGlowTex(),color:color,transparent:true,opacity:op||.5,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  m.scale.set(r*2,1,r*2);m.position.set(x,mapLocalH(mi,x,z)+.08,z);g.add(m);return m;
+}
+const _dM=new THREE.Matrix4(),_dQ=new THREE.Quaternion(),_dP=new THREE.Vector3(),_dS=new THREE.Vector3(),_dE=new THREE.Euler(),_dC=new THREE.Color();
+function decInst(g,geo,mat,list,shadow){
+  const im=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));
+  for(let i=0;i<list.length;i++){
+    const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);_dP.set(o.x,o.y,o.z);
+    const s=o.s||1;_dS.set(o.sx||s,o.sy||s,o.sz||s);_dM.compose(_dP,_dQ,_dS);im.setMatrixAt(i,_dM);
+    if(o.c!==undefined){_dC.setHex(o.c);im.setColorAt(i,_dC);}
+  }
+  im.count=list.length;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;
+  im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);return im;
+}
+/* modelos glTF en instancias (mucho más barato que clonar cada uno) */
+function decModelInst(mi,g,path,list,tint,shadow){
+  const gl=ENV_READY[path];if(!gl||!list.length)return;
+  gl.scene.updateMatrixWorld(true);
+  const parts=[];gl.scene.traverse(m=>{if(m.isMesh)parts.push(m);});
+  const tc=tint!==undefined?new THREE.Color(tint):null;
+  parts.forEach(m=>{
+    const src=Array.isArray(m.material)?m.material[0]:m.material,nm=src.clone();
+    if(tc&&nm.color)nm.color.lerp(tc,.34);
+    const im=new THREE.InstancedMesh(m.geometry,nm,list.length);
+    for(let i=0;i<list.length;i++){
+      const o=list[i];_dE.set(o.rx||0,o.ry||0,o.rz||0);_dQ.setFromEuler(_dE);
+      _dP.set(o.x,o.y===undefined?mapLocalH(mi,o.x,o.z):o.y,o.z);_dS.setScalar(o.s||1);
+      _dM.compose(_dP,_dQ,_dS);_dM.multiply(m.matrixWorld);im.setMatrixAt(i,_dM);
+    }
+    im.count=list.length;im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.castShadow=!!shadow&&Q>0;im.receiveShadow=true;g.add(im);
+  });
+}
+/* une varias formas en una sola geometría con color por vértice */
+function decMerge(parts){
+  const pos=[],nor=[],col=[],uv=[],idx=[],m=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3(),c=new THREE.Color();let off=0;
+  parts.forEach(pt=>{
+    m.compose(new THREE.Vector3(pt.x||0,pt.y||0,pt.z||0),new THREE.Quaternion().setFromEuler(new THREE.Euler(pt.rx||0,pt.ry||0,pt.rz||0)),new THREE.Vector3(pt.sx||1,pt.sy||1,pt.sz||1));
+    nm.getNormalMatrix(m);c.setHex(pt.c);
+    const p=pt.g.attributes.position,n=pt.g.attributes.normal,u=pt.g.attributes.uv;
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyMatrix4(m);pos.push(v.x,v.y,v.z);
+      v.fromBufferAttribute(n,i).applyMatrix3(nm).normalize();nor.push(v.x,v.y,v.z);
+      col.push(c.r,c.g,c.b);uv.push(u?u.getX(i):0,u?u.getY(i):0);
+    }
+    const ix=pt.g.index.array;for(let i=0;i<ix.length;i++)idx.push(ix[i]+off);off+=p.count;
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+  return g;
+}
+/* puntos de colocación que respetan portal, arenas, caminos, lava y lagos */
+function decPts(mi,n,seed,o){
+  o=o||{};const R=rngMap(seed),out=[],bs=MAP_BOSSES[mi]||[],ext=o.ext||(LIMIT-4);let t=0;
+  while(out.length<n&&t<n*40){
+    t++;let x,z;
+    if(o.edge){const s=Math.floor(R()*4),a=(R()*2-1)*(HALF-6),d=LIMIT-1+R()*(o.edge||10);if(s===0){x=a;z=-d;}else if(s===1){x=a;z=d;}else if(s===2){x=-d;z=a;}else{x=d;z=a;}}
+    else{x=(R()*2-1)*ext;z=(R()*2-1)*ext;
+      if(Math.hypot(x,z-6)<(o.safe||17))continue;
+      if(bs.some(b=>Math.hypot(x-b.x,z-b.z)<(o.arena||15)))continue;
+      if(!o.onPath&&decPathD(mi,x,z)<(o.pw===undefined?4.5:o.pw))continue;
+      if(mi===2&&MAP_LAVA[2].some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lava||4)))continue;
+      if(mi===1&&DEC_LAKES.some(p=>Math.hypot(x-p.x,z-p.z)<p.r+(o.lake||3)))continue;
+    }
+    if(o.test&&!o.test(x,z,R))continue;
+    if(o.gap&&out.some(q=>Math.hypot(q.x-x,q.z-z)<o.gap))continue;
+    out.push({x:x,z:z,r:R()});
+  }
+  return out;
+}
+
+/* --- geometrías y materiales compartidos --- */
+function decG(){
+  if(DEC.geo)return DEC.geo;
+  const G={};
+  function rock(seed){
+    const g=new THREE.SphereGeometry(1,14,10),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+      const n=vnoise(x*1.7+seed,z*1.7+y*1.3-seed)*.55+vnoise(x*4+seed*2,y*4-z*4)*.25,k=.78+n*.62;
+      x*=k;y*=k;z*=k;if(y<-.3)y=-.3+(y+.3)*.15;p.setXYZ(i,x,y,z);
+    }
+    g.computeVertexNormals();return g;
+  }
+  G.rocks=[rock(1),rock(7),rock(13),rock(21)];
+  G.crystal=new THREE.LatheGeometry([new THREE.Vector2(0,0),new THREE.Vector2(.5,.05),new THREE.Vector2(.55,.6),new THREE.Vector2(.3,1),new THREE.Vector2(0,1.4)],6);
+  G.spike=new THREE.ConeGeometry(.5,1,7,1).translate(0,.5,0);
+  G.tuft=new THREE.ConeGeometry(.1,1,4,1).translate(0,.5,0);
+  G.mound=new THREE.SphereGeometry(1,12,8);
+  G.log=new THREE.CylinderGeometry(.28,.32,1,8).rotateZ(Math.PI/2);
+  G.egg=new THREE.SphereGeometry(.5,12,10);
+  G.peak=(function(){
+    const g=new THREE.ConeGeometry(.5,1,9,5).translate(0,.5,0),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=1+(vnoise(x*5+y*3,z*5-y*3)-.5)*.5*(1-y);p.setXYZ(i,x*k,y,z*k);}
+    g.computeVertexNormals();return g;
+  })();
+  G.rib=new THREE.TorusGeometry(1,.07,6,18,Math.PI);
+  G.obelisk=new THREE.CylinderGeometry(.3,.7,1,4).translate(0,.5,0);
+  G.rune=new THREE.BoxGeometry(.16,.55,.04);
+  G.vent=new THREE.LatheGeometry([new THREE.Vector2(1.5,0),new THREE.Vector2(.95,.65),new THREE.Vector2(.62,.95),new THREE.Vector2(.4,.82)],9);
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),C=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s||10),S=(r,w,h)=>new THREE.SphereGeometry(r,w||12,h||8);
+  G.tomb=decMerge([{g:B(.95,1.1,.3),y:.55,c:0x8a8f92},{g:C(.475,.475,.3,14),rx:Math.PI/2,y:1.1,c:0x8a8f92}]);
+  G.cross=decMerge([{g:B(.22,1.6,.22),y:.8,c:0x777b7f},{g:B(.85,.22,.22),y:1.1,c:0x777b7f}]);
+  G.torch=decMerge([{g:C(.07,.1,2.3,6),y:1.15,c:0x6a4c34},{g:C(.32,.16,.3,8),y:2.4,c:0x2c2c30}]);
+  G.brazier=decMerge([{g:C(.04,.06,1.2,5),y:.5,x:.32,rz:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:.28,rz:.14,rx:-.28,c:0x2a2a2e},{g:C(.04,.06,1.2,5),y:.5,x:-.16,z:-.28,rz:.14,rx:.28,c:0x2a2a2e},{g:C(.6,.34,.4,10),y:1.15,c:0x3a3a40},{g:C(.5,.5,.06,10),y:1.34,c:0x1a1214}]);
+  G.tent=decMerge([{g:new THREE.ConeGeometry(2.3,2.9,4),y:1.45,ry:Math.PI/4,c:0xc4ab82},{g:C(.05,.05,1.2,5),y:3.2,c:0x4a3626},{g:B(.9,1.6,.12),y:.8,z:1.55,ry:0,rx:-.5,c:0x2a1f18}]);
+  G.igloo=decMerge([{g:new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI/2),sx:2.3,sy:1.8,sz:2.3,c:0xeef6fc},{g:C(.75,.75,1.4,10),rx:Math.PI/2,y:.55,z:2.1,c:0xe4f0f8},{g:C(.5,.5,.2,10),rx:Math.PI/2,y:.5,z:2.85,c:0x1a2430}]);
+  G.skull=decMerge([{g:S(.5,10,8),sx:1,sy:.85,sz:1.1,y:.5,c:0xe8e0cc},{g:B(.55,.16,.5),y:.18,z:.3,c:0xdcd3bd},{g:S(.12,6,5),x:.2,y:.56,z:.42,c:0x161616},{g:S(.12,6,5),x:-.2,y:.56,z:.42,c:0x161616}]);
+  G.mausoleum=decMerge([{g:B(5,3.4,5.6),y:1.7,c:0x80868a},{g:new THREE.ConeGeometry(4.4,2.2,4),y:4.5,ry:Math.PI/4,c:0x555d62},{g:B(1.5,2.4,.4),y:1.2,z:2.8,c:0x080c0e},{g:C(.28,.32,3.4,8),x:-1.2,y:1.7,z:3,c:0x9aa0a3},{g:C(.28,.32,3.4,8),x:1.2,y:1.7,z:3,c:0x9aa0a3}]);
+  G.banner=decMerge([{g:C(.07,.09,4.8,6),y:2.4,c:0x5a4230},{g:B(1.2,2,.06),x:.65,y:3.7,c:0xffffff}]);
+  G.barrow=decMerge([{g:B(1.4,.7,2.2),y:.35,c:0x5c4630},{g:B(1.5,.12,2.3),y:.74,c:0x3d2e1f}]);
+  function mush(cap,spot){const parts=[{g:C(.2,.3,1.1,10),y:.55,c:0xe9ddc2},{g:new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI/2),sx:.9,sy:.6,sz:.9,y:1.05,c:cap}];for(let i=0;i<6;i++){const a=i/6*Math.PI*2+.4,rr=.42+(i%2)*.15;parts.push({g:S(.1,6,5),x:Math.cos(a)*rr,z:Math.sin(a)*rr,y:1.05+.6*Math.sqrt(Math.max(0,1-Math.pow(rr/.9,2)))-.02,c:spot});}return decMerge(parts);}
+  G.mushA=mush(0x8a4cc0,0xf6e9a0);G.mushB=mush(0x2fa59a,0xd8fff0);G.mushC=mush(0xb04a6a,0xffe9d0);
+  DEC.geo=G;return G;
+}
+function decMat(k){
+  if(DEC.mat[k])return DEC.mat[k];
+  const T=THREE,tex=groundTex;let m;
+  if(k==='rock')m=new T.MeshPhongMaterial({color:0xffffff,shininess:5,specular:0x222222,map:tex});
+  else if(k==='vc2')m=new T.MeshPhongMaterial({color:0xffffff,shininess:6,specular:0x111111});
+  else if(k==='snow')m=new T.MeshPhongMaterial({color:0xffffff,shininess:30,specular:0x8899aa});
+  else if(k==='vc')m=new T.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:6,specular:0x111111});
+  else if(k==='vcGlow')m=new T.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:6,emissive:0x2a1048});
+  else if(k==='tuft')m=new T.MeshPhongMaterial({color:0xffffff,shininess:0,side:T.DoubleSide});
+  else if(k==='ice')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0x1c4a74,flatShading:true,shininess:90,specular:0xffffff,transparent:true,opacity:.9});
+  else if(k==='crystalV')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0x5a1a9a,flatShading:true,shininess:90,specular:0xffffff,transparent:true,opacity:.92});
+  else if(k==='crystalG')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0x1a7a3a,flatShading:true,shininess:90,specular:0xffffff,transparent:true,opacity:.92});
+  else if(k==='obsidian')m=new T.MeshPhongMaterial({color:0xffffff,shininess:80,specular:0x995544,emissive:0x1a0604,flatShading:true});
+  else if(k==='lavarock')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0xd23a0c,shininess:4,map:tex});
+  else if(k==='egg')m=new T.MeshPhongMaterial({color:0xffffff,emissive:0x7a2208,shininess:60,specular:0xffddaa});
+  else if(k==='bone')m=new T.MeshPhongMaterial({color:0xe6dcc4,shininess:12});
+  else if(k==='rune')m=new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95});
+  else if(k==='lake')m=new T.MeshPhongMaterial({color:0xa5dcf2,emissive:0x16384c,shininess:110,specular:0xffffff,transparent:true,opacity:.84});
+  else if(k==='toxic')m=new T.MeshBasicMaterial({color:0x6bff6a,transpare
+
+===== GLTFLoader =====
+GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+<script>window.KKDATA={"chars":{"Knight":"Z2xURgIAAAD0NQUAdDsAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6Iktocm9ub3MgZ2xURiBCbGVuZGVyIEkvTyB2MS43LjMzIiwidmVyc2lvbiI6IjIuMCJ9LCJzY2VuZSI6MCwic2NlbmVzIjpbeyJuYW1lIjoiU2NlbmUiLCJub2RlcyI6WzMyXX1dLCJub2RlcyI6W3sibmFtZSI6ImhhbmRzbG90LmwiLCJyb3RhdGlvbiI6WzEuNjgwNjEyMzE1OTc5NjAxNmUtMDksMS42ODA2MTIyMDQ5NTcyOTkxZS0wOSwtMC43MDcxMDY4Mjg2ODk1NzUyLDAuNzA3MTA2NzA5NDgwMjg1Nl0sInNjYWxlIjpbMC45OTk5OTk5NDAzOTUzNTUyLDEsMC45OTk5OTk5NDAzOTUzNTUyXSwidHJhbnNsYXRpb24iOls1LjEzODkyMDQwMDMyNzE1MmUtMTAsMC4wOTYxMjUwNjYyODAzNjQ5OSwtMC4wNTc1MDAxMjM5Nzc2NjExM119LHsiY2hpbGRyZW4iOlswXSwibmFtZSI6ImhhbmQubCIsInJvdGF0aW9uIjpbMS4yMDAxNjM4NTcxODQ1Nzc0ZS0wOSwxLjM1ODkyOTE4MjUxNTU2N2UtMDcsLTUuNDU1MTk1NjA1NDYzODE0ZS0wNiwxXSwic2NhbGUiOlsxLDAuOTk5OTk5OTQwMzk1MzU1MiwwLjk5OTk5OTk0MDM5NTM1NTJdLCJ0cmFuc2xhdGlvbiI6WzkuMDU0OTc4OTg4ODQyNzc3ZS0xMywwLjA3MzgyNTgzNjE4MTY0MDYyLC0yLjIyMDQ0NjA0OTI1MDMxM2UtMTZdfSx7ImNoaWxkcmVuIjpbMV0sIm5hbWUiOiJ3cmlzdC5sIiwicm90YXRpb24iOls1LjExODQ1NTY1OTMxNDIzNmUtMTEsLTMuMDc3NDI1NTM2NjIzOTM0NWUtMTAsMC4wMjY2NTgwOTkxNDQ2OTcxOSwwLjk5OTY0NDY5NjcxMjQ5MzldLCJzY2FsZSI6WzAuOTk5OTk5OTQwMzk1MzU1MiwwLjk5OTk5OTk0MDM5NTM1NTIsMC45OTk5OTk5NDAzOTUzNTUyXSwidHJhbnNsYXRpb24iOls3LjQyNjI4MTgxMTcxNzY3MmUtMDksMC4yNjAwNDM4Mjk2Nzk0ODkxNCw2LjEyNzk2NDEwODM3MTEzMWUtMTFdfSx7ImNoaWxkcmVuIjpbMl0sIm5hbWUiOiJsb3dlcmFybS5sIiwicm90YXRpb24iOlsxLjQ5NDI1OTYwNDkzOTQyOTdlLTA5LC02LjIyODExNTI2Nzk1ODg1NmUtMDgsLTAuMDU1Mjg1NTIwODUxNjEyMDksMC45OTg0NzA2MDQ0MTk3MDgzXSwic2NhbGUiOlsxLjAwMDAwMDIzODQxODU3OSwwLjk5OTk5OTg4MDc5MDcxMDQsMC45OTk5OTk5NDAzOTUzNTUyXSwidHJhbnNsYXRpb24iOlstMy4yMTk2NjQzMTI5MzY3NDNlLTA5LDAuMjQxODk3Mjk5ODg1NzQ5ODIsLTEuMTk0MDU2MTI1MDg2NzE3N2UtMDddfSx7ImNoaWxkcmVuIjpbM10sIm5hbWUiOiJ1cHBlcmFybS5sIiwicm90YXRpb24iOlstMC41MTQxMjE0NzI4MzU1NDA4LC0wLjQ4NTQ2Nzc5MTU1NzMxMiwtMC40ODU0Njc3NjE3NTQ5ODk2LDAuNTE0MTIxODkwMDY4MDU0Ml0sInNjYWxlIjpbMC45OTk5OTkzNDQzNDg5MDc1LDAuOTk5OTk5MzQ0MzQ4OTA3NSwwLjk5OTk5OTc2MTU4MTQyMDldLCJ0cmFuc2xhdGlvbiI6WzAuMjEyMDA3MzczNTcxMzk1ODcsMC4xMzQxMzIxNDY4MzUzMjcxNSw4LjQwMjQ2MjAxNTA1NTc5ZS0wOF19LHsibmFtZSI6ImhhbmRzbG90LnIiLCJyb3RhdGlvbiI6WzEuNjgwNTkyMjIwOTQyODU1OWUtMDksLTEuNjgwNTkyMTA5OTIwNTUzNGUtMDksMC43MDcxMDY4Mjg2ODk1NzUyLDAuNzA3MTA2NzA5NDgwMjg1Nl0sInNjYWxlIjpbMC45OTk5OTk5NDAzOTUzNTUyLDEsMC45OTk5OTk5NDAzOTUzNTUyXSwidHJhbnNsYXRpb24iOlstNS4xMzg5MjA0MDAzMjcxNTJlLTEwLDAuMDk2MTI1MDY2MjgwMzY0OTksLTAuMDU3NTAwMTIzOTc3NjYxMTNdfSx7ImNoaWxkcmVuIjpbNV0sIm5hbWUiOiJoYW5kLnIiLCJyb3RhdGlvbiI6WzEuMTk5OTE2Mjc3NDUwMDg2ZS0wOSwtOS4yMTA5Njg2OTg4ODA2MDZlLTA4LDUuNDU1MTk1NjA1NDYzODE0ZS0wNiwxXSwic2NhbGUiOlsxLDAuOTk5OTk5OTQwMzk1MzU1MiwwLjk5OTk5OTk0MDM5NTM1NTJdLCJ0cmFuc2xhdGlvbiI6WzMuOTk2ODAyODg4NjUwNTYzNWUtMTUsMC4wNzM4MjU4MzYxODE2NDA2MiwtMi4yMjA0NDYwNDkyNTAzMTNlLTE2XX0seyJjaGlsZHJlbiI6WzZdLCJuYW1lIjoid3Jpc3QuciIsInJvdGF0aW9uIjpbNS4xMTg0MjcyMDk4NDkyM2UtMTEsMy4wNzczNzIyNDU5MTg3NTI1ZS0xMCwtMC4wMjY2NTgwOTkxNDQ2OTcxOSwwLjk5OTY0NDY5NjcxMjQ5MzldLCJzY2FsZSI6WzAuOTk5OTk5OTQwMzk1MzU1MiwwLjk5OTk5OTk0MDM5NTM1NTIsMC45OTk5OTk5NDAzOTUzNTUyXSwidHJhbnNsYXRpb24iOlstNy40MjYyODE4MTE3MTc2NzJlLTA5LDAuMjYwMDQzODI5Njc5NDg5MTQsNi4xMjc5NjQxMDgzNzExMzFlLTExXX0seyJjaGlsZHJlbiI6WzddLCJuYW1lIjoibG93ZXJhcm0uciIsInJvdGF0aW9uIjpbMS40OTQyNTk2MDQ5Mzk0Mjk3ZS0wOSw2LjIyODExNTI2Nzk1ODg1NmUtMDgsMC4wNTUyODU1MjA4NTE2MTIwOSwwLjk5ODQ3MDYwNDQxOTcwODNdLCJzY2FsZSI6WzEuMDAwMDAwMjM4NDE4NTc5LDAuOTk5OTk5ODgwNzkwNzEwNCwwLjk5OTk5OTk0MDM5NTM1NTJdLCJ0cmFuc2xhdGlvbiI6Wy03LjEyMTkyMjQ5NjE4OTM3ZS0xMSwwLjI0MTg5NzMyOTY4ODA3MjIsLTEuMTk0MDU2MTI1MDg2NzE3N2UtMDddfSx7ImNoaWxkcmVuIjpbOF0sIm5hbWUiOiJ1cHBlcmFybS5yIiwicm90YXRpb24iOlstMC41MTQxMjE0MTMyMzA4OTYsMC40ODU0Njc3MzE5NTI2NjcyNCwwLjQ4NTQ2Nzc2MTc1NDk4OTYsMC41MTQxMjE5NDk2NzI2OTldLCJzY2FsZSI6WzAuOTk5OTk5MzQ0MzQ4OTA3NSwwLjk5OTk5OTM0NDM0ODkwNzUsMC45OTk5OTk3NjE1ODE0MjA5XSwidHJhbnNsYXRpb24iOlstMC4yMTIwMDczNzM1NzEzOTU4NywwLjEzNDEzMjE0NjgzNTMyNzE1LDguNDAyNDYyMDE1MDU1NzllLTA4XX0seyJuYW1lIjoiaGVhZCIsInJvdGF0aW9uIjpbMCw0LjIzNTE2NDczNjI3MTUwMmUtMjIsMCwxXSwidHJhbnNsYXRpb24iOlswLDAuMjY4Nzk2NTYzMTQ4NDk4NTQsMF19LHsiY2hpbGRyZW4iOls0LDksMTBdLCJuYW1lIjoiY2hlc3QiLCJyb3RhdGlvbiI6WzAsLTguNDcwMzI5NDcyNTQzMDAzZS0yMiwwLDFdLCJzY2FsZSI6WzEsMC45OTk5OTk5NDAzOTUzNTUyLDFdLCJ0cmFuc2xhdGlvbiI6WzAsMC4zNzQ5ODc5NTk4NjE3NTUzNywwXX0seyJjaGlsZHJlbiI6WzExXSwibmFtZSI6InNwaW5lIiwicm90YXRpb24iOlswLDcuMTA1NDI3MzU3NjAxMDAyZS0xNSwwLDFdLCJ0cmFuc2xhdGlvbiI6WzAsMC4xOTE5Nzc1MDA5MTU1MjczNCwwXX0seyJuYW1lIjoidG9lcy5yIiwicm90YXRpb24iOlsyLjEyMTk4MTUyMzgyODI1MzZlLTA4LDAuOTIwMzU0OTYyMzQ4OTM4LC0wLjM5MTA4NDEwNDc3NjM4MjQ1LDYuNDUwNTkxMTcyMzI0NDk0ZS0wOF0sInNjYWxlIjpbMSwwLjk5OTk5NjYwMjUzNTI0NzgsMS4wMDAwMDM2OTU0ODc5NzZdLCJ0cmFuc2xhdGlvbiI6WzIuMTMyMzMyNjQzNzg5NDI1MmUtMTAsMC4xNjU2NTAwMjUwMTAxMDg5NSw1LjE3MTQwMDE5Njk1NzE2NTVlLTA5XX0seyJjaGlsZHJlbiI6WzEzXSwibmFtZSI6ImZvb3QuciIsInJvdGF0aW9uIjpbLTAuNDU1MjM5MDI3NzM4NTcxMTcsMS42NTk4MjAyOTg5ODI1OTVlLTA3LDIuMjUwNDg0Njg3NDkzNzgxZS0wOSwwLjg5MDM2OTI5NjA3MzkxMzZdLCJzY2FsZSI6WzEsMS4wMDAwMDA4MzQ0NjUwMjY5LDAuOTk5OTk4NzQ4MzAyNDU5N10sInRyYW5zbGF0aW9uIjpbLTEuODMzOTIyMTgwNzgyODIxZS0xMCwwLjE0OTQzNzAyNTE4OTM5OTcyLDkuNjU4Nzg1OTkzMjM4NDRlLTEwXX0seyJjaGlsZHJlbiI6WzE0XSwibmFtZSI6Imxvd2VybGVnLnIiLCJyb3RhdGlvbiI6WzAuMTA2MjI1MTQwMzkyNzgwMywtNi44NjUyMjkwOTYzMjAwMzZlLTA4LDcuMzc3MDI1OTIzNDYwNjc4ZS0wOCwwLjk5NDM0MjIwNzkwODYzMDRdLCJzY2FsZSI6WzEsMS4wMDAwMDA0NzY4MzcxNTgyLDEuMDAwMDAwMTE5MjA5Mjg5Nl0sInRyYW5zbGF0aW9uIjpbLTMuNTc5NzU3Mzc5NDEyNzRlLTA5LDAuMjI3MDc3NDk5MDMyMDIwNTcsLTYuMTQwMzI1MTM3MjM4Mjc4ZS0wOV19LHsiY2hpbGRyZW4iOlsxNV0sIm5hbWUiOiJ1cHBlcmxlZy5yIiwicm90YXRpb24iOlswLjk5OTg0OTA4MTAzOTQyODcsNy40MjY1NzI3Nzg5Njc5NjZlLTA4LC0zLjE3MjYyODAyNjk1OTUwMWUtMDgsMC4wMTczNzMxOTExOTI3NDYxNjJdLCJzY2FsZSI6WzEsMC45OTk5OTk4MjExODYwNjU3LDEuMDAwMDAxMTkyMDkyODk1NV0sInRyYW5zbGF0aW9uIjpbLTAuMTcwOTQ1MDYzMjMzMzc1NTUsMC4xMTM1ODcyNjAyNDYyNzY4NiwxLjM5MjMyNzIzMTI4NjU3MmUtMDhdfSx7Im5hbWUiOiJ0b2VzLmwiLCJyb3RhdGlvbiI6WzQuNzc1OTg3OTYwNjcwMTM2ZS0wOCwwLjkyMDM1NDk2MjM0ODkzOCwtMC4zOTEwODQxMDQ3NzYzODI0NSw1LjgwMTU2MDgzMTc0MTg4MWUtMDhdLCJzY2FsZSI6WzEsMC45OTk5OTY2MDI1MzUyNDc4LDEuMDAwMDAzNjk1NDg3OTc2XSwidHJhbnNsYXRpb24iOlstMS41MTE0Mzk2ODQ1MjA2MTAyZS0wOCwwLjE2NTY1MDAyNTAxMDEwODk1LDUuMTcxMzkyMjAzMzUxMzg4ZS0wOV19LHsiY2hpbGRyZW4iOlsxN10sIm5hbWUiOiJmb290LmwiLCJyb3RhdGlvbiI6Wy0wLjQ1NTIzOTAyNzczODU3MTE3LDEuNjE5NzU0OTk2Nzk1NTYzOGUtMDgsLTMuNDM1NjM5NjgzODU3NTE2NWUtMDgsMC44OTAzNjkyOTYwNzM5MTM2XSwic2NhbGUiOlsxLDEuMDAwMDAwODM0NDY1MDI2OSwwLjk5OTk5ODc0ODMwMjQ1OTddLCJ0cmFuc2xhdGlvbiI6WzEuODMzOTM0NjcwNzkxODQ4ZS0xMCwwLjE0OTQzNzAyNTE4OTM5OTcyLDkuNjU4NzM4MjUzNjQ4MzhlLTEwXX0seyJjaGlsZHJlbiI6WzE4XSwibmFtZSI6Imxvd2VybGVnLmwiLCJyb3RhdGlvbiI6WzAuMTA2MjI1MTQwMzkyNzgwMyw2Ljg2NTIyNzY3NTIzNDU2NGUtMDgsLTcuMzc3MDI1OTIzNDYwNjc4ZS0wOCwwLjk5NDM0MjIwNzkwODYzMDRdLCJzY2FsZSI6WzEsMS4wMDAwMDA0NzY4MzcxNTgyLDEuMDAwMDAwMTE5MjA5Mjg5Nl0sInRyYW5zbGF0aW9uIjpbMy41Nzk3NTczNzk0MTI3NGUtMDksMC4yMjcwNzc0OTkwMzIwMjA1NywtNi4xNDAzMjUxMzcyMzgyNzhlLTA5XX0seyJjaGlsZHJlbiI6WzE5XSwibmFtZSI6InVwcGVybGVnLmwiLCJyb3RhdGlvbiI6WzAuOTk5ODQ5MDgxMDM5NDI4NywtNy4xMzI3NjU0ODkzNTkzNzJlLTA4LC0xLjIwNDI3MzEyNTY2NTYyMjVlLTA4LDAuMDE3MzczMTkxMTkyNzQ2MTYyXSwic2NhbGUiOlsxLDAuOTk5OTk5ODIxMTg2MDY1NywxLjAwMDAwMTE5MjA5Mjg5NTVdLCJ0cmFuc2xhdGlvbiI6WzAuMTcwOTQ1MDYzMjMzMzc1NTUsMC4xMTM1ODcyNjAyNDYyNzY4NiwxLjM5MjMyNzIzMTI4NjU3MmUtMDhdfSx7ImNoaWxkcmVuIjpbMTIsMTYsMjBdLCJuYW1lIjoiaGlwcyIsInJvdGF0aW9uIjpbMCwtMS4xOTIwOTI3NTMzOTkyNjUzZS0wNywwLDFdLCJ0cmFuc2xhdGlvbiI6WzAsMC40MDU2NjM0MzA2OTA3NjU0LDBdfSx7ImNoaWxkcmVuIjpbMjFdLCJuYW1lIjoicm9vdCIsInJvdGF0aW9uIjpbMCwxLjE5MjA5Mjc1MzM5OTI2NTNlLTA3LDAsMV19LHsibWVzaCI6MCwibmFtZSI6IktuaWdodF9Bcm1MZWZ0Iiwic2tpbiI6MH0seyJtZXNoIjoxLCJuYW1lIjoiS25pZ2h0X0FybVJpZ2h0Iiwic2tpbiI6MH0seyJtZXNoIjoyLCJuYW1lIjoiS25pZ2h0X0JvZHkiLCJza2luIjowfSx7Im1lc2giOjMsIm5hbWUiOiJLbmlnaHRfQ2FwZSIsInNraW4iOjB9LHsibWVzaCI6NCwibmFtZSI6IktuaWdodF9IZWFkIiwic2tpbiI6MH0seyJtZXNoIjo1LCJuYW1lIjoiS25pZ2h0X0hlbG1ldCIsInNraW4iOjB9LHsibWVzaCI6NiwibmFtZSI6IktuaWdodF9IZWxtZXRWaXNvciIsInNraW4iOjB9LHsibWVzaCI6NywibmFtZSI6IktuaWdodF9MZWdMZWZ0Iiwic2tpbiI6MH0seyJtZXNoIjo4LCJuYW1lIjoiS25pZ2h0X0xlZ1JpZ2h0Iiwic2tpbiI6MH0seyJjaGlsZHJlbiI6WzIzLDI0LDI1LDI2LDI3LDI4LDI5LDMwLDMxLDIyXSwibmFtZSI6IlJpZ19NZWRpdW0ifV0sIm1hdGVyaWFscyI6W3siZG91YmxlU2lkZWQiOnRydWUsIm5hbWUiOiJrbmlnaHQiLCJwYnJNZXRhbGxpY1JvdWdobmVzcyI6eyJtZXRhbGxpY0ZhY3RvciI6MCwicm91Z2huZXNzRmFjdG9yIjowLjV9fV0sIm1lc2hlcyI6W3sibmFtZSI6IktuaWdodF9Bcm1MZWZ0IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MCwiTk9STUFMIjoxLCJURVhDT09SRF8wIjoyLCJKT0lOVFNfMCI6MywiV0VJR0hUU18wIjo0fSwiaW5kaWNlcyI6NSwibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiS25pZ2h0X0FybVJpZ2h0IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NywiTk9STUFMIjo4LCJURVhDT09SRF8wIjo5LCJKT0lOVFNfMCI6MTAsIldFSUdIVFNfMCI6MTF9LCJpbmRpY2VzIjoxMiwibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiS25pZ2h0X0JvZHkiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjoxMywiTk9STUFMIjoxNCwiVEVYQ09PUkRfMCI6MTUsIkpPSU5UU18wIjoxNiwiV0VJR0hUU18wIjoxN30sImluZGljZXMiOjE4LCJtYXRlcmlhbCI6MH1dfSx7Im5hbWUiOiJLbmlnaHRfQ2FwZSIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjE5LCJOT1JNQUwiOjIwLCJURVhDT09SRF8wIjoyMSwiSk9JTlRTXzAiOjIyLCJXRUlHSFRTXzAiOjIzfSwiaW5kaWNlcyI6MjQsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6IktuaWdodF9IZWFkIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MjUsIk5PUk1BTCI6MjYsIlRFWENPT1JEXzAiOjI3LCJKT0lOVFNfMCI6MjgsIldFSUdIVFNfMCI6Mjl9LCJpbmRpY2VzIjozMCwibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiS25pZ2h0X0hlbG1ldCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjMxLCJOT1JNQUwiOjMyLCJURVhDT09SRF8wIjozMywiSk9JTlRTXzAiOjM0LCJXRUlHSFRTXzAiOjM1fSwiaW5kaWNlcyI6MzYsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6IktuaWdodF9IZWxtZXRWaXNvciIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjM3LCJOT1JNQUwiOjM4LCJURVhDT09SRF8wIjozOSwiSk9JTlRTXzAiOjQwLCJXRUlHSFRTXzAiOjQxfSwiaW5kaWNlcyI6NDIsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6IktuaWdodF9MZWdMZWZ0IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NDMsIk5PUk1BTCI6NDQsIlRFWENPT1JEXzAiOjQ1LCJKT0lOVFNfMCI6NDYsIldFSUdIVFNfMCI6NDd9LCJpbmRpY2VzIjo0OCwibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiS25pZ2h0X0xlZ1JpZ2h0IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NDksIk5PUk1BTCI6NTAsIlRFWENPT1JEXzAiOjUxLCJKT0lOVFNfMCI6NTIsIldFSUdIVFNfMCI6NTN9LCJpbmRpY2VzIjo1NCwibWF0ZXJpYWwiOjB9XX1dLCJza2lucyI6W3siaW52ZXJzZUJpbmRNYXRyaWNlcyI6Niwiam9pbnRzIjpbMjIsMjEsMTIsMTEsNCwzLDIsMSwwLDksOCw3LDYsNSwxMCwxNiwxNSwxNCwxMywyMCwxOSwxOCwxN10sIm5hbWUiOiJSaWdfTWVkaXVtIn1dLCJhY2Nlc3NvcnMiOlt7ImJ1ZmZlclZpZXciOjAsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1MTQsIm1heCI6WzAuOTcxMjUzMzM1NDc1OTIxNiwxLjI3MTg1NzUwMDA3NjI5NCwwLjE0MjE1MTcxMzM3MTI3Njg2XSwibWluIjpbMC4wNTIwODIxNzM1MjYyODcwOCwwLjk3NTMwNTAyMDgwOTE3MzYsLTAuMTY4NTg1OTg1ODk4OTcxNTZdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjUxNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjIsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1MTQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjozLCJjb21wb25lbnRUeXBlIjo1MTIxLCJjb3VudCI6NTE0LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6NCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjUxNCwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjUsImNvbXBvbmVudFR5cGUiOjUxMjMsImNvdW50IjoxODY2LCJ0eXBlIjoiU0NBTEFSIn0seyJidWZmZXJWaWV3Ijo3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjMsInR5cGUiOiJNQVQ0In0seyJidWZmZXJWaWV3Ijo4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTE0LCJtYXgiOlstMC4wNTIwODIxNzM1MjYyODcwOCwxLjI3MTg1NzUwMDA3NjI5NCwwLjE0MjE1MTcxMzM3MTI3Njg2XSwibWluIjpbLTAuOTcxMjUzMzM1NDc1OTIxNiwwLjk3NTMwNTAyMDgwOTE3MzYsLTAuMTY4NTg1OTg1ODk4OTcxNTZdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6OSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjUxNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjEwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTE0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MTEsImNvbXBvbmVudFR5cGUiOjUxMjEsImNvdW50Ijo1MTQsInR5cGUiOiJWRUM0In0seyJidWZmZXJWaWV3IjoxMiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjUxNCwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjEzLCJjb21wb25lbnRUeXBlIjo1MTIzLCJjb3VudCI6MTg2NiwidHlwZSI6IlNDQUxBUiJ9LHsiYnVmZmVyVmlldyI6MTQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoxMzQwLCJtYXgiOlswLjM5NDkwMjA4MDI5NzQ3MDEsMS4zMDA4MjcwMjYzNjcxODc1LDAuMzY1NTU0OTU4NTgxOTI0NDRdLCJtaW4iOlstMC4zOTQ4NTYzMzM3MzI2MDUsMC4zNzYzOTk1MTcwNTkzMjYxNywtMC40MTMyMTAyNDI5ODY2NzkxXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjE1LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MTM0MCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjE2LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MTM0MCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjE3LCJjb21wb25lbnRUeXBlIjo1MTIxLCJjb3VudCI6MTM0MCwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjE4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MTM0MCwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjE5LCJjb21wb25lbnRUeXBlIjo1MTIzLCJjb3VudCI6Mzg2NCwidHlwZSI6IlNDQUxBUiJ9LHsiYnVmZmVyVmlldyI6MjAsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1NiwibWF4IjpbMC40ODUzODkwNTM4MjE1NjM3LDEuMjM1OTkxMTIwMzM4NDQsLTAuMDQzNTA1MDQ2NTE2NjU2ODc2XSwibWluIjpbLTAuNDg1MzY3Nzc0OTYzMzc4OSwwLjA5NDA0NjM1NDI5MzgyMzI0LC0wLjM4NjA5MzkxNDUwODgxOTZdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MjEsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1NiwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjIyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTYsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoyMywiY29tcG9uZW50VHlwZSI6NTEyMSwiY291bnQiOjU2LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6MjQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1NiwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjI1LCJjb21wb25lbnRUeXBlIjo1MTIzLCJjb3VudCI6MjUyLCJ0eXBlIjoiU0NBTEFSIn0seyJidWZmZXJWaWV3IjoyNiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjc3MCwibWF4IjpbMC41NDMxODczNzk4MzcwMzYxLDIuMjg0MTg1ODg2MzgzMDU2NiwwLjUzMTc5MzY1Mzk2NDk5NjNdLCJtaW4iOlstMC41NDMxNTkzMDYwNDkzNDY5LDEuMjE1ODkxMjQyMDI3MjgyNywtMC40ODIwODk2MDg5MDc2OTk2XSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjI3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NzcwLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MjgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo3NzAsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoyOSwiY29tcG9uZW50VHlwZSI6NTEyMSwiY291bnQiOjc3MCwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjMwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NzcwLCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6MzEsImNvbXBvbmVudFR5cGUiOjUxMjMsImNvdW50IjozMjQ2LCJ0eXBlIjoiU0NBTEFSIn0seyJidWZmZXJWaWV3IjozMiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQ4NSwibWF4IjpbMC41Njk0OTcyMjc2Njg3NjIyLDIuMzk3ODcxOTcxMTMwMzcxLDAuNTk3NjkyMzEwODEwMDg5MV0sIm1pbiI6Wy0wLjU2OTQ5NzIyNzY2ODc2MjIsMS4wOTg0MDcwMzAxMDU1OTA4LC0wLjU0MjE4NDc3MDEwNzI2OTNdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MzMsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo0ODUsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjozNCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQ4NSwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjM1LCJjb21wb25lbnRUeXBlIjo1MTIxLCJjb3VudCI6NDg1LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6MzYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo0ODUsInR5cGUiOiJWRUM0In0seyJidWZmZXJWaWV3IjozNywiY29tcG9uZW50VHlwZSI6NTEyMywiY291bnQiOjEyNTQsInR5cGUiOiJTQ0FMQVIifSx7ImJ1ZmZlclZpZXciOjM4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NDc3LCJtYXgiOlswLjYwODUxNzM0ODc2NjMyNjksMi41NDMxMDQxNzE3NTI5Mjk3LDAuNzY1NTkyOTMyNzAxMTEwOF0sIm1pbiI6Wy0wLjYwODc5NDI3MTk0NTk1MzQsMS42NTIyNDAwMzc5MTgwOTA4LC0wLjA4NTA1NzA4NzI0MjYwMzNdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MzksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo0NzcsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo0MCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQ3NywidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjQxLCJjb21wb25lbnRUeXBlIjo1MTIxLCJjb3VudCI6NDc3LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6NDIsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo0NzcsInR5cGUiOiJWRUM0In0seyJidWZmZXJWaWV3Ijo0MywiY29tcG9uZW50VHlwZSI6NTEyMywiY291bnQiOjEyODQsInR5cGUiOiJTQ0FMQVIifSx7ImJ1ZmZlclZpZXciOjQ0LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTg2LCJtYXgiOlswLjI5MTY5MDQ5ODU5MDQ2OTM2LDAuNTI5MTk0MzU1MDEwOTg2MywwLjI5MzQyMDA3NjM3MDIzOTI2XSwibWluIjpbMC4wNDU2NTEyNjQ0ODg2OTcwNSwtNS41NjY0OTAwNDY2ODIzMDRlLTEwLC0wLjEzMjk3NTg3NjMzMTMyOTM1XSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjQ1LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTg2LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NDYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1ODYsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo0NywiY29tcG9uZW50VHlwZSI6NTEyMSwiY291bnQiOjU4NiwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjQ4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTg2LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6NDksImNvbXBvbmVudFR5cGUiOjUxMjMsImNvdW50IjoxODg0LCJ0eXBlIjoiU0NBTEFSIn0seyJidWZmZXJWaWV3Ijo1MCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjU4NiwibWF4IjpbLTAuMDQ1NjQ0Njg1NjI2MDI5OTcsMC41MjkxOTQzNTUwMTA5ODYzLDAuMjkzNDIwMDc2MzcwMjM5MjZdLCJtaW4iOlstMC4yOTE2ODM5NDIwNzk1NDQwNywtNS41NjY0OTAwNDY2ODIzMDRlLTEwLC0wLjEzMjk3NTg3NjMzMTMyOTM1XSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjUxLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTg2LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NTIsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50Ijo1ODYsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo1MywiY29tcG9uZW50VHlwZSI6NTEyMSwiY291bnQiOjU4NiwidHlwZSI6IlZFQzQifSx7ImJ1ZmZlclZpZXciOjU0LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NTg2LCJ0eXBlIjoiVkVDNCJ9LHsiYnVmZmVyVmlldyI6NTUsImNvbXBvbmVudFR5cGUiOjUxMjMsImNvdW50IjoxODg0LCJ0eXBlIjoiU0NBTEFSIn1dLCJidWZmZXJWaWV3cyI6W3siYnVmZmVyIjowLCJieXRlTGVuZ3RoIjo2MTY4LCJieXRlT2Zmc2V0IjowfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6NjE2OCwiYnl0ZU9mZnNldCI6NjE2OH0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjQxMTIsImJ5dGVPZmZzZXQiOjEyMzM2fSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MjA1NiwiYnl0ZU9mZnNldCI6MTY0NDh9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjo4MjI0LCJieXRlT2Zmc2V0IjoxODUwNH0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjM3MzIsImJ5dGVPZmZzZXQiOjI2NzI4fSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MTI5MTQsImJ5dGVPZmZzZXQiOjMwNDYwfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MTQ3MiwiYnl0ZU9mZnNldCI6NDMzNzZ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjo2MTY4LCJieXRlT2Zmc2V0Ijo0NDg0OH0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjYxNjgsImJ5dGVPZmZzZXQiOjUxMDE2fSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6NDExMiwiYnl0ZU9mZnNldCI6NTcxODR9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyMDU2LCJieXRlT2Zmc2V0Ijo2MTI5Nn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjgyMjQsImJ5dGVPZmZzZXQiOjYzMzUyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MzczMiwiYnl0ZU9mZnNldCI6NzE1NzZ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxNjA4MCwiYnl0ZU9mZnNldCI6NzUzMDh9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxNjA4MCwiYnl0ZU9mZnNldCI6OTEzODh9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxMDcyMCwiYnl0ZU9mZnNldCI6MTA3NDY4fSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6NTM2MCwiYnl0ZU9mZnNldCI6MTE4MTg4fSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MjE0NDAsImJ5dGVPZmZzZXQiOjEyMzU0OH0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjc3MjgsImJ5dGVPZmZzZXQiOjE0NDk4OH0
