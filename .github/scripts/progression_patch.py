@@ -4,6 +4,7 @@ p = Path('index.html')
 s = p.read_text()
 
 # Progresión de niveles: cada mapa secundario sube 20 niveles.
+# Nieve 20, Dragones 40, Muertos 60, Ruinas 80.
 repls = [
     ("const R=rngMap(7000+mi),jobs=[];", "const R=rngMap(7000+mi),jobs=[],baseLv=mi*20;"),
     ("add(t,x,z,undefined,mi);c++;", "add(t,x,z,baseLv,mi);c++;"),
@@ -17,17 +18,23 @@ for old, new in repls:
         raise SystemExit('No se encontró patrón de progresión: ' + old[:70])
     s = s.replace(old, new, 1)
 
-# La EXP ya escala con e.lvl en el juego. Los objetos normales ya usan e.lvl;
-# hacemos que los bosses también tiren objetos exactamente de su nivel.
+# EXP acorde al nivel real del enemigo, sin que los bosses altos salten demasiados niveles.
+old = "const diff=e.lvl-P.lvl,f=clamp(1+diff*.15,.25,1.6);gainExp(Math.round(e.d.xp*(1+.3*(e.lvl-1))*f));"
+new = "const diff=e.lvl-P.lvl,f=clamp(1+diff*.08,.35,1.75),baseXp=e.boss?Math.round(800+e.lvl*140):Math.round(40+e.lvl*18);gainExp(Math.round(baseXp*f));"
+if old not in s:
+    raise SystemExit('No se encontró fórmula de EXP')
+s = s.replace(old, new, 1)
+
+# Los objetos caen con el mismo nivel del enemigo. Los mobs normales ya usan e.lvl;
+# hacemos lo mismo con los bosses.
 old = "genItem(e.lvl+1,i===0?3:2)"
 if old not in s:
     raise SystemExit('No se encontró el nivel de objeto de boss')
 s = s.replace(old, "genItem(e.lvl,i===0?3:2)", 1)
 
-# Evitar que a niveles altos la probabilidad de joya llegue a 100% y bloquee
-# por completo el drop de equipamiento normal.
+# A niveles altos, mantener una probabilidad razonable de joyas y equipamiento.
 s = s.replace("Math.random()<.2+e.lvl*.015", "Math.random()<Math.min(.55,.2+e.lvl*.015)", 1)
 s = s.replace("Math.random()<.22+e.lvl*.012", "Math.random()<Math.min(.65,.22+e.lvl*.012)", 1)
 
 p.write_text(s)
-print('Progresión por mapas aplicada: 20/40/60/80; bosses hasta 100')
+print('Progresión aplicada: mobs 20/40/60/80, bosses 30-100, EXP e items escalados')
