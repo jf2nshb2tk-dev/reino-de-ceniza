@@ -10,12 +10,14 @@ if old not in s:
     raise SystemExit('No se encontro formula base de monstruos')
 s=s.replace(old,new,1)
 
-# +20% de EXP manteniendo el ajuste por diferencia de nivel.
-old="gainExp(Math.round(baseXp*f));"
-new="gainExp(Math.round(baseXp*f*1.20));"
+# EXP: conservar +20% base, pero premiar de verdad matar enemigos muy por encima del nivel.
+# Ejemplo calibrado: un PJ lvl 37 matando un mob lvl 80 recibe ~36k EXP,
+# equivalente aproximadamente a 3 niveles con la curva actual de expNeed().
+old="const diff=e.lvl-P.lvl,f=clamp(1+diff*.08,.35,1.75),baseXp=e.boss?Math.round(800+e.lvl*140):Math.round(40+e.lvl*18);gainExp(Math.round(baseXp*f));"
+new="const diff=e.lvl-P.lvl,gap=Math.max(0,diff),low=diff<0?clamp(1+diff*.08,.35,1):1,baseXp=e.boss?Math.round(800+e.lvl*140):Math.round(40+e.lvl*18);let xp=baseXp*low*1.20;if(gap>0)xp+=expNeed(P.lvl)*(gap/14.4);gainExp(Math.round(xp));"
 if old not in s:
-    raise SystemExit('No se encontro formula de EXP')
+    raise SystemExit('No se encontro formula completa de EXP')
 s=s.replace(old,new,1)
 
 p.write_text(s)
-print('Balance aplicado: +20% vida/defensa/ataque y +20% EXP')
+print('Balance aplicado: +20% combate y EXP con bonus fuerte por diferencia de nivel')
