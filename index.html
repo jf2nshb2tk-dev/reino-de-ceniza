@@ -1900,7 +1900,7 @@ function updateHUD(){
   setTx(aMp.querySelector('.cnt'),'mpots',potCount('mp'),(e,v)=>{e.textContent=v;});
   aDodge.querySelector('.cd').style.transform='scaleY('+(P.dodgeCd>0?clamp(P.dodgeCd/1.2,0,1):0)+')';
   setTx(aPot.querySelector('.cnt'),'pots',potCount('hp'),(e,v)=>{e.textContent=v;});
-  const nm=Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);
+  const nm=currentMap===0&&Math.hypot(P.x-MERCH.x,P.z-MERCH.z)<7;els.shop.hidden=!(nm&&!panelOpen&&!P.dead);
   if(!els.shop.hidden){const v=smithV.set(MERCH.x,terrainH(MERCH.x,MERCH.z)+3.1,MERCH.z).project(camera);els.shop.style.left=((v.x*.5+.5)*innerWidth)+'px';els.shop.style.top=((-v.y*.5+.5)*innerHeight)+'px';}
 }
 const smithV=new THREE.Vector3();let smith=null;
@@ -2456,8 +2456,10 @@ function mapColor(mi,x,z,h,out){
   const n=vnoise(x*.22,z*.22),n2=vnoise(x*.58+33,z*.58-17),hs=clamp(1+h*.025,.7,1.3);
   let r=.3,g=.3,b=.3;
   if(mi===1){
-    const ice=ss(.38,.78,n2);r=lerp(.72,.92,ice);g=lerp(.78,.95,ice);b=lerp(.82,1,ice);
-    if(n<.28){r*=.72;g*=.78;b*=.82;}
+    // Nieve azul-gris: conserva contraste aun con bloom y niebla en iPhone.
+    const ice=ss(.38,.78,n2);r=lerp(.44,.70,ice);g=lerp(.52,.78,ice);b=lerp(.60,.86,ice);
+    if(n<.30){r*=.68;g*=.73;b*=.79;}
+    if(h>4){const cap=clamp((h-4)/12,0,.08);r+=cap;g+=cap;b+=cap;}
   }else if(mi===2){
     const crack=Math.abs(n2-.5)<.055;r=.17+.1*n;g=.13+.05*n;b=.13+.045*n;if(crack){r=.72;g=.18+.12*n;b=.055;}
   }else if(mi===3){
@@ -2477,7 +2479,7 @@ resolve=function(e,r){
 };
 
 const MAP_ATM={
-  1:{fog:new THREE.Color(0x9aabb7),hemi:new THREE.Color(0xd9edff),top:new THREE.Color(0x334b68),near:38,far:132,star:.15},
+  1:{fog:new THREE.Color(0x617487),hemi:new THREE.Color(0xa9bfd2),top:new THREE.Color(0x1d3147),near:42,far:128,star:.06},
   2:{fog:new THREE.Color(0x3b1712),hemi:new THREE.Color(0xd07a54),top:new THREE.Color(0x160706),near:30,far:118,star:.18},
   3:{fog:new THREE.Color(0x252535),hemi:new THREE.Color(0x8f91ad),top:new THREE.Color(0x080914),near:31,far:112,star:.95},
   4:{fog:new THREE.Color(0x293027),hemi:new THREE.Color(0xa4a38d),top:new THREE.Color(0x10120f),near:35,far:122,star:.45}
@@ -2485,7 +2487,7 @@ const MAP_ATM={
 atmoUpdate=function(dt){
   if(currentMap===0){_atmo0(dt);return;}
   const A=MAP_ATM[currentMap],k=Math.min(1,dt*1.7),fg=scene.fog;
-  fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);
+  fg.color.lerp(A.fog,k);scene.background.copy(fg.color);fg.near+=(A.near-fg.near)*k;fg.far+=(A.far-fg.far)*k;hemi.color.lerp(A.hemi,k);if(currentMap===1){hemi.intensity+=(.58-hemi.intensity)*k;if(bloom){bloom.strength=.22;bloom.threshold=.9;bloom.radius=.32;}}
   SKY_U.uHor.value.copy(fg.color);SKY_U.uTop.value.lerp(A.top,k);SKY_U.uStar.value+=(A.star-SKY_U.uStar.value)*k;SKY_U.uT.value=T;WIND.value=T;skyMesh.position.copy(camera.position);LAVA_U.uT.value=T;
   lavaAcc+=dt*(Q===0?3:Q===1?7:11);const pools=MAP_LAVA[currentMap]||[];
   while(lavaAcc>1){lavaAcc-=1;if(!pools.length)continue;const p=pools[(Math.random()*pools.length)|0];if(Math.hypot(p.x-P.x,p.z-P.z)>75)continue;const a=Math.random()*TAU,r=Math.sqrt(Math.random())*p.r*.9;fxp.emit(p.x+Math.cos(a)*r,MAP_Y[currentMap]+.35,p.z+Math.sin(a)*r,rnd(-.5,.5),rnd(1.4,3.2),rnd(-.5,.5),rnd(1.1,2.2),rnd(.12,.24),[1,rnd(.35,.6),.12],-.4);}
