@@ -45,6 +45,9 @@ jobs:
       - name: Compactar inventario estilo MU
         run: python3 .github/scripts/compact_inventory_patch.py
 
+      - name: Aplicar armaduras visuales por tier
+        run: python3 .github/scripts/armor_visual_patch.py
+
       - name: Reforzar carga de mapas pesados en iPhone
         run: python3 .github/scripts/heavy_map_stability_patch.py
 
