@@ -28,17 +28,18 @@ jobs:
         shell: bash
         run: |
           mkdir -p assets/quaternius
-          python3 -m pip install -q gdown
-          gdown 1oALqyqy7yVQnLh-Vs19kKg3eZgJqIgoc -O assets/quaternius/Warrior.gltf
-          gdown 1OfEos4LtQLrMfJLpw2OdBNhbu36RtZUd -O assets/quaternius/Wizard.gltf
-          gdown 1e3eAO6oHYVyDNdhoNogNii5CtLQB7pLc -O assets/quaternius/Ranger.gltf
+          BASE="https://raw.githubusercontent.com/euuuuuuan/cairnfall-public/main/assets/vendor/quaternius_rpg"
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Warrior.gltf" -o assets/quaternius/Warrior.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Wizard.gltf" -o assets/quaternius/Wizard.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Ranger.gltf" -o assets/quaternius/Ranger.gltf
           python3 - <<'PY'
           from pathlib import Path
-          for name in ('Warrior','Wizard','Ranger'):
+          expected={'Warrior':3035392,'Wizard':3296909,'Ranger':2987934}
+          for name,size in expected.items():
               p=Path('assets/quaternius')/(name+'.gltf')
-              t=p.read_text(errors='ignore')
-              if len(t)<100000 or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
-                  raise SystemExit('Modelo Quaternius invalido: '+name)
+              t=p.read_text(errors='strict')
+              if p.stat().st_size!=size or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
+                  raise SystemExit(f'Modelo Quaternius invalido: {name} ({p.stat().st_size})')
               print(name, p.stat().st_size)
           PY
 
