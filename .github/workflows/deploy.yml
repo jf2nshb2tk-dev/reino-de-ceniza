@@ -48,6 +48,9 @@ jobs:
       - name: Aplicar armaduras visuales por tier
         run: python3 .github/scripts/armor_visual_patch.py
 
+      - name: Aplicar cinco tiers del Guerrero
+        run: python3 .github/scripts/warrior_armor_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
