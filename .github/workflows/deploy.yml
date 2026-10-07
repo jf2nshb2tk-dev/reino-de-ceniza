@@ -24,23 +24,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Preparar modelos Quaternius T5
+      - name: Preparar piezas Quaternius T5
         shell: bash
         run: |
           mkdir -p assets/quaternius
-          BASE="https://raw.githubusercontent.com/euuuuuuan/cairnfall-public/main/assets/vendor/quaternius_rpg"
-          curl --retry 3 --retry-delay 2 -fL "$BASE/Warrior.gltf" -o assets/quaternius/Warrior.gltf
-          curl --retry 3 --retry-delay 2 -fL "$BASE/Wizard.gltf" -o assets/quaternius/Wizard.gltf
-          curl --retry 3 --retry-delay 2 -fL "$BASE/Ranger.gltf" -o assets/quaternius/Ranger.gltf
+          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=15eAmpUglpZc5qjlDRThb3cvqmPvvihPD&export=download&confirm=t" -o assets/quaternius/Warrior.obj
+          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=1QJt-p0iRezGKUQlMQP_mnYlnnK_KfRDt&export=download&confirm=t" -o assets/quaternius/Wizard.obj
+          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=12vOwOHcZwxxV7l2KK-HUdLefL-MRiqHf&export=download&confirm=t" -o assets/quaternius/Ranger.obj
           python3 - <<'PY'
           from pathlib import Path
-          expected={'Warrior':3035392,'Wizard':3296909,'Ranger':2987934}
+          expected={'Warrior.obj':459385,'Wizard.obj':463856,'Ranger.obj':312961}
           for name,size in expected.items():
-              p=Path('assets/quaternius')/(name+'.gltf')
-              t=p.read_text(errors='strict')
-              if p.stat().st_size!=size or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
-                  raise SystemExit(f'Modelo Quaternius invalido: {name} ({p.stat().st_size})')
-              print(name, p.stat().st_size)
+              p=Path('assets/quaternius')/name
+              if p.stat().st_size!=size or not p.read_text(errors='ignore').lstrip().startswith('#'):
+                  # Blender OBJ a veces empieza con mtllib/o; validamos además que tenga vértices y objetos.
+                  t=p.read_text(errors='ignore')
+                  if p.stat().st_size!=size or '\nv ' not in '\n'+t or '\no ' not in '\n'+t:
+                      raise SystemExit(f'OBJ Quaternius invalido: {name} ({p.stat().st_size})')
+              print(name,p.stat().st_size)
           PY
 
       - name: Aplicar ajustes para iPhone
@@ -85,11 +86,11 @@ jobs:
       - name: Aplicar Barbaro Asesino y Brujo
         run: python3 .github/scripts/remaining_armor_patch.py
 
-      - name: Aplicar modelos Quaternius T5
-        run: python3 .github/scripts/quaternius_t5_patch.py
-
-      - name: Corregir animaciones y texturas Quaternius
-        run: python3 .github/scripts/quaternius_t5_fix_patch.py
+      - name: Aplicar piezas Quaternius como armaduras T5
+        shell: bash
+        run: |
+          python3 .github/scripts/quaternius_t5_patch.py
+          rm -rf assets/quaternius
 
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
