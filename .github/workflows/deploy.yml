@@ -28,18 +28,18 @@ jobs:
         shell: bash
         run: |
           mkdir -p assets/quaternius
-          python3 -m pip install --quiet gdown
-          gdown 15eAmpUglpZc5qjlDRThb3cvqmPvvihPD -O assets/quaternius/Warrior.obj
-          gdown 1QJt-p0iRezGKUQlMQP_mnYlnnK_KfRDt -O assets/quaternius/Wizard.obj
-          gdown 12vOwOHcZwxxV7l2KK-HUdLefL-MRiqHf -O assets/quaternius/Ranger.obj
+          BASE="https://raw.githubusercontent.com/euuuuuuan/cairnfall-public/main/assets/vendor/quaternius_rpg"
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Warrior.gltf" -o assets/quaternius/Warrior.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Wizard.gltf" -o assets/quaternius/Wizard.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Ranger.gltf" -o assets/quaternius/Ranger.gltf
           python3 - <<'PY'
           from pathlib import Path
-          expected={'Warrior.obj':459385,'Wizard.obj':463856,'Ranger.obj':312961}
+          expected={'Warrior.gltf':3035392,'Wizard.gltf':3296909,'Ranger.gltf':2987934}
           for name,size in expected.items():
               p=Path('assets/quaternius')/name
-              t=p.read_text(errors='ignore')
-              if p.stat().st_size!=size or '\nv ' not in '\n'+t or '\no ' not in '\n'+t:
-                  raise SystemExit(f'OBJ Quaternius invalido: {name} ({p.stat().st_size})')
+              t=p.read_text(errors='strict')
+              if p.stat().st_size!=size or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
+                  raise SystemExit(f'Modelo Quaternius invalido: {name} ({p.stat().st_size})')
               print(name,p.stat().st_size)
           PY
 
