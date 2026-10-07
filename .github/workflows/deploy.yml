@@ -24,6 +24,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Preparar modelos Quaternius T5
+        shell: bash
+        run: |
+          mkdir -p assets/quaternius
+          python3 -m pip install -q gdown
+          gdown --id 1oALqyqy7yVQnLh-Vs19kKg3eZgJqIgoc -O assets/quaternius/Warrior.gltf
+          gdown --id 1OfEos4LtQLrMfJLpw2OdBNhbu36RtZUd -O assets/quaternius/Wizard.gltf
+          gdown --id 1e3eAO6oHYVyDNdhoNogNii5CtLQB7pLc -O assets/quaternius/Ranger.gltf
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('Warrior','Wizard','Ranger'):
+              p=Path('assets/quaternius')/(name+'.gltf')
+              t=p.read_text(errors='ignore')
+              if len(t)<100000 or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
+                  raise SystemExit('Modelo Quaternius invalido: '+name)
+              print(name, p.stat().st_size)
+          PY
+
       - name: Aplicar ajustes para iPhone
         run: python3 .github/scripts/patch_game.py
 
@@ -65,6 +83,9 @@ jobs:
 
       - name: Aplicar Barbaro Asesino y Brujo
         run: python3 .github/scripts/remaining_armor_patch.py
+
+      - name: Aplicar modelos Quaternius T5
+        run: python3 .github/scripts/quaternius_t5_patch.py
 
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
