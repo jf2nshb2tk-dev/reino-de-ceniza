@@ -1,161 +1,88 @@
 from pathlib import Path
+import json
 
-p=Path("index.html")
+p=Path('index.html')
 s=p.read_text()
-marker="QUATERNIUS_T5_V1"
+marker='QUATERNIUS_ARMOR_ONLY_V2'
 if marker in s:
-    print("Quaternius T5 ya aplicado")
+    print('Quaternius armor-only V2 ya aplicado')
     raise SystemExit(0)
 
-anchor="const _qa=new THREE.Quaternion(),_ax=new THREE.Vector3(1,0,0),_ay=new THREE.Vector3(0,1,0);"
-if anchor not in s:
-    raise SystemExit("No se encontro ancla despues de KK_ENEMY")
+ROOT=Path('assets/quaternius')
+SRC={
+    'warrior':(ROOT/'Warrior.obj','Warrior_Body__ncl1_29.005'),
+    'wizard':(ROOT/'Wizard.obj','Wizard.001__ncl1_29.006'),
+    'ranger':(ROOT/'Ranger.obj','Ranger_Cube.003'),
+}
+for fp,_ in SRC.values():
+    if not fp.exists(): raise SystemExit(f'Falta pieza Quaternius: {fp}')
 
-helpers=r"""/* QUATERNIUS_T5_V1 - modelos T5 reales, carga bajo demanda */
-const QK={chars:{},loading:{}};
-const QK_SPEC={
-  guerrero:{key:'Warrior',url:'assets/quaternius/Warrior.gltf',s:.68,weapon:/Warrior_Sword/i},
-  mago:{key:'Wizard',url:'assets/quaternius/Wizard.gltf',s:.68,weapon:/Wizard_Staff/i},
-  elfa:{key:'Ranger',url:'assets/quaternius/Ranger.gltf',s:.70,weapon:/Ranger_Bow/i}
-};
-function qkArmorCount(){
-  if(!P)return 0;
-  let n=0;
-  ['casco','armadura','guantes','botas'].forEach(sl=>{const it=P.eq&&P.eq[sl];if(it&&armorTier(it)>=4)n++;});
-  return n;
-}
-function qkCandidate(){
-  return !!(P&&QK_SPEC[P.cls]&&((P.lvl||1)>=81||qkArmorCount()>=2));
-}
-function qkReady(cls){
-  const sp=QK_SPEC[cls];
-  return !!(sp&&QK.chars[sp.key]);
-}
-function qkEnsure(cls){
-  const sp=QK_SPEC[cls];
-  if(!sp||!THREE.GLTFLoader)return Promise.resolve(false);
-  if(QK.chars[sp.key])return Promise.resolve(true);
-  if(QK.loading[sp.key])return QK.loading[sp.key];
-  QK.loading[sp.key]=new Promise(resolve=>{
-    const ld=new THREE.GLTFLoader();
-    ld.load(sp.url,g=>{QK.chars[sp.key]=g;resolve(true);},undefined,()=>resolve(false));
-  }).finally(()=>{delete QK.loading[sp.key];});
-  return QK.loading[sp.key];
-}
-function qkRequestIfNeeded(){
-  if(!qkCandidate()||qkReady(P.cls))return;
-  const cls=P.cls;
-  qkEnsure(cls).then(ok=>{
-    if(ok&&P&&P.cls===cls&&qkCandidate()&&playerRig&&!playerRig.qk)buildPlayerModel();
-  });
-}
-function qkFind(model,name){
-  const nm=name.replace(/[._]/g,'').toLowerCase();let f=null;
-  model.traverse(o=>{if(!f&&o.isBone&&o.name.replace(/[._]/g,'').toLowerCase()===nm)f=o;});
-  return f;
-}
-function qkBuild(cls){
-  const sp=QK_SPEC[cls],src=sp&&QK.chars[sp.key];
-  if(!src)return null;
-  const model=THREE.SkeletonUtils.clone(src.scene),g=new THREE.Group(),rollG=new THREE.Group(),off=new THREE.Group();
-  g.add(rollG);rollG.position.y=.8;rollG.add(off);off.position.y=-.8;off.add(model);model.scale.setScalar(sp.s);
-  const mats=[],meshes=[],wmats=[];
-  model.traverse(m=>{
-    if(!m.isMesh)return;
-    const mt=m.material.clone();
-    mt.skinning=!!m.isSkinnedMesh;
-    if('metalness' in mt)mt.metalness=Math.min(.18,mt.metalness||0);
-    if('roughness' in mt)mt.roughness=.78;
-    if(mt.emissive)mt.userData.em0=mt.emissive.clone();
-    m.material=mt;m.castShadow=true;meshes.push(m);mats.push(mt);
-    if(sp.weapon.test(m.name||''))wmats.push(mt);
-  });
-  const bn={
-    uaR:qkFind(model,'UpperArm.R'),uaL:qkFind(model,'UpperArm.L'),
-    laR:qkFind(model,'LowerArm.R'),laL:qkFind(model,'LowerArm.L'),
-    handR:qkFind(model,'Fist.R'),handL:qkFind(model,'Fist.L'),
-    chest:qkFind(model,'Torso'),hips:qkFind(model,'Hips'),
-    llR:qkFind(model,'LowerLeg.R'),llL:qkFind(model,'LowerLeg.L'),
-    footR:qkFind(model,'Foot.R'),footL:qkFind(model,'Foot.L'),
-    head:qkFind(model,'Head')
-  };
-  const mixer=new THREE.AnimationMixer(model),act={};
-  const cmap={Idle_A:'Idle',Walking_A:'Walk',Running_A:'Run',Death_A:'Death',Hit_A:'RecieveHit',Jump_Idle:'Roll'};
-  Object.keys(cmap).forEach(k=>{
-    const c=(src.animations||[]).find(x=>x.name===cmap[k]);
-    if(c)act[k]=mixer.clipAction(c);
-  });
-  const rig={type:'glb',qk:true,qkClass:cls,mixer:mixer,act:act,cur:null,rollG:rollG,tip:null,base:null,weaponMats:wmats,
-    uaR:bn.uaR,uaL:bn.uaL,laR:bn.laR,laL:bn.laL,chest:bn.chest,hips:bn.hips,head:bn.head,
-    handR:bn.handR,handL:bn.handL,llR:bn.llR,llL:bn.llL,footR:bn.footR,footL:bn.footL,armorVisuals:[]};
-  glbPlay(rig,'Idle_A');
-  if(act.Idle_A)act.Idle_A.time=Math.random()*act.Idle_A.getClip().duration;
-  return {g:g,glb:true,meshes:meshes,mats:mats,rig:rig};
-}
-function qkT5Active(){
-  return qkCandidate()&&qkReady(P.cls);
-}
-function qkGearVisuals(){
-  if(!playerRig||!playerRig.qk)return;
-  const its=['casco','armadura','guantes','botas'].map(sl=>P.eq&&P.eq[sl]).filter(Boolean);
-  let best=0;
-  its.forEach(it=>{best=Math.max(best,lvOf(it));});
-  const accent={guerrero:0xf0b24a,mago:0x9d78d0,elfa:0x68c994}[P.cls]||0xf0b24a;
-  const glow=best>=15?.18:best>=11?.09:best>=7?.035:0;
-  playerMeshes.forEach(me=>{
-    const ms=Array.isArray(me.material)?me.material:[me.material];
-    ms.forEach(mt=>{
-      if(mt.color)mt.color.setHex(0xffffff);
-      if(mt.emissive)mt.emissive.setHex(accent).multiplyScalar(glow);
-      mt.needsUpdate=true;
-    });
-  });
-  const w=P.eq&&P.eq.arma;
-  playerRig.weaponMats.forEach(mt=>{
-    if(!mt.emissive)return;
-    if(w&&w.r>=2)mt.emissive.set(RARITY[w.r].c).multiplyScalar(.28);
-  });
-}
-"""
-s=s.replace(anchor,helpers+"\n"+anchor,1)
+def parse_obj(path):
+    vs=[]; objs={}; cur=None
+    for line in path.read_text().splitlines():
+        if line.startswith('v '):
+            vs.append(tuple(map(float,line.split()[1:4])))
+        elif line.startswith('o '):
+            cur=line[2:].strip(); objs[cur]=[]
+        elif line.startswith('f ') and cur:
+            ids=[int(x.split('/')[0])-1 for x in line.split()[1:]]
+            if len(ids)==3: objs[cur].append(ids)
+            else:
+                for i in range(1,len(ids)-1): objs[cur].append([ids[0],ids[i],ids[i+1]])
+    return vs,objs
 
-old="""function buildPlayerModel(){
-  if(playerG){scene.remove(playerG);}
-  const m=(KK.ok&&KK_PLAYER[P.cls])?kkBuild(KK_PLAYER[P.cls]):humanoid(MODEL_OPT[P.cls]);playerG=m.g;playerRig=m.rig;scene.add(playerG);
-  if(trail){trail.dispose();trail=null;}
-  if(playerRig.tip)trail=new Trail(22,[1,.85,.55]);
-  playerMeshes=m.glb?m.meshes:collect(playerG);
-  if(!m.glb)playerMeshes.forEach(me=>{me.userData.mat=me.material=me.material.clone();});
-  gearVisuals();
-}"""
-new="""function buildPlayerModel(){
-  if(playerG){scene.remove(playerG);}
-  const qm=qkT5Active()?qkBuild(P.cls):null;
-  const m=qm||((KK.ok&&KK_PLAYER[P.cls])?kkBuild(KK_PLAYER[P.cls]):humanoid(MODEL_OPT[P.cls]));playerG=m.g;playerRig=m.rig;scene.add(playerG);
-  if(trail){trail.dispose();trail=null;}
-  if(playerRig.tip)trail=new Trail(22,[1,.85,.55]);
-  playerMeshes=m.glb?m.meshes:collect(playerG);
-  if(!m.glb)playerMeshes.forEach(me=>{me.userData.mat=me.material=me.material.clone();});
-  gearVisuals();
-  qkRequestIfNeeded();
-}"""
-if old not in s:
-    raise SystemExit("No se encontro buildPlayerModel esperado")
+def piece(vs,faces,pred=None):
+    tris=[]
+    for f in faces:
+        c=[sum(vs[i][j] for i in f)/3 for j in range(3)]
+        if pred is None or pred(*c): tris.append(f)
+    ids={i for f in tris for i in f}; pts=[vs[i] for i in ids]
+    if not pts: raise SystemExit('Pieza Quaternius vacia')
+    mn=[min(q[j] for q in pts) for j in range(3)]; mx=[max(q[j] for q in pts) for j in range(3)]
+    ctr=[(mn[j]+mx[j])/2 for j in range(3)]; size=[mx[j]-mn[j] for j in range(3)]
+    pos=[]
+    for f in tris:
+        for i in f:
+            q=vs[i]; pos.extend(round(q[j]-ctr[j],5) for j in range(3))
+    return {'p':pos,'s':[round(x,5) for x in size]}
+
+Q={}
+vs,o=parse_obj(SRC['warrior'][0]); b=o[SRC['warrior'][1]]
+Q.update({
+'wChest':piece(vs,b,lambda x,y,z:1.25<y<2.05),'wHips':piece(vs,b,lambda x,y,z:.8<y<1.3),
+'wArmL':piece(vs,b,lambda x,y,z:x>.25 and 1<y<1.8),'wArmR':piece(vs,b,lambda x,y,z:x<-.25 and 1<y<1.8),
+'wLegL':piece(vs,b,lambda x,y,z:x>.08 and .15<y<1),'wLegR':piece(vs,b,lambda x,y,z:x<-.08 and .15<y<1),
+'wFootL':piece(vs,b,lambda x,y,z:x>.05 and y<.35),'wFootR':piece(vs,b,lambda x,y,z:x<-.05 and y<.35),
+'wShL':piece(vs,o['ShoulderPad.L__ncl1_29.000']),'wShR':piece(vs,o['ShoulderPad.R__ncl1_29.001'])})
+vs,o=parse_obj(SRC['wizard'][0]); b=o[SRC['wizard'][1]]
+Q.update({
+'mChest':piece(vs,b,lambda x,y,z:1.25<y<2.05),'mArmL':piece(vs,b,lambda x,y,z:x>.25 and 1<y<1.8),'mArmR':piece(vs,b,lambda x,y,z:x<-.25 and 1<y<1.8),
+'mLegL':piece(vs,b,lambda x,y,z:x>.08 and .15<y<1),'mLegR':piece(vs,b,lambda x,y,z:x<-.08 and .15<y<1),
+'mFootL':piece(vs,b,lambda x,y,z:x>.05 and y<.35),'mFootR':piece(vs,b,lambda x,y,z:x<-.05 and y<.35),
+'mShL':piece(vs,o['ShoulderPad.L__ncl1_29.002']),'mShR':piece(vs,o['ShoulderPad.R__ncl1_29.004'])})
+vs,o=parse_obj(SRC['ranger'][0]); b=o[SRC['ranger'][1]]
+Q.update({
+'eChest':piece(vs,b,lambda x,y,z:1.2<y<2),'eLegL':piece(vs,b,lambda x,y,z:x>.08 and .15<y<1),'eLegR':piece(vs,b,lambda x,y,z:x<-.08 and .15<y<1),
+'eFootL':piece(vs,b,lambda x,y,z:x>.05 and y<.35),'eFootR':piece(vs,b,lambda x,y,z:x<-.05 and y<.35),
+'eArmL':piece(vs,o['ArmGuard.L_Cube.002']),'eArmR':piece(vs,o['ArmGuard.R_Cube.004']),'eCloak':piece(vs,o['Cloak_Cube.000'])})
+
+helpers=f'''/* QUATERNIUS_ARMOR_ONLY_V2 - piezas reales sobre el personaje original */
+const QKA={json.dumps(Q,separators=(',',':'))};
+function qkGeom(d){{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(d.p,3));g.computeVertexNormals();return g;}}
+function qkGroup(parent){{if(!parent)return null;const g=new THREE.Group();parent.add(g);playerRig.armorVisuals.push(g);return g;}}
+function qkPiece(parent,d,mat,target,pos=[0,0,0]){{if(!parent||!d)return null;const g=qkGroup(parent),me=new THREE.Mesh(qkGeom(d),mat);me.scale.set(target[0]/d.s[0],target[1]/d.s[1],target[2]/d.s[2]);me.position.set(pos[0],pos[1],pos[2]);me.castShadow=true;g.add(me);return me;}}
+function qkIsT5(it){{return !!(it&&armorTier(it)>=4);}}
+function qkWarriorArmor(){{if(P.cls!=='guerrero')return;const a=P.eq.armadura,g=P.eq.guantes,b=P.eq.botas;if(qkIsT5(a)){{const m=warriorMat(a,false),t=warriorMat(a,true);qkPiece(playerRig.chest,QKA.wChest,m,[.66,.50,.32],[0,.02,.10]);qkPiece(playerRig.hips,QKA.wHips,m,[.52,.30,.30],[0,-.10,.05]);qkPiece(playerRig.uaL,QKA.wShL,t,[.28,.20,.28],[-.02,.05,.02]);qkPiece(playerRig.uaR,QKA.wShR,t,[.28,.20,.28],[.02,.05,.02]);}}if(qkIsT5(g)){{const m=warriorMat(g,false);qkPiece(playerRig.laL,QKA.wArmL,m,[.18,.30,.20],[0,.08,.02]);qkPiece(playerRig.laR,QKA.wArmR,m,[.18,.30,.20],[0,.08,.02]);}}if(qkIsT5(b)){{const m=warriorMat(b,false),t=warriorMat(b,true);qkPiece(playerRig.llL,QKA.wLegL,m,[.20,.34,.22],[0,.10,.01]);qkPiece(playerRig.llR,QKA.wLegR,m,[.20,.34,.22],[0,.10,.01]);qkPiece(playerRig.footL,QKA.wFootL,t,[.21,.14,.30],[0,.03,.08]);qkPiece(playerRig.footR,QKA.wFootR,t,[.21,.14,.30],[0,.03,.08]);}}}}
+function qkMageArmor(){{if(P.cls!=='mago')return;const a=P.eq.armadura,g=P.eq.guantes,b=P.eq.botas;if(qkIsT5(a)){{const m=mageMat(a,false),t=mageMat(a,true);qkPiece(playerRig.chest,QKA.mChest,m,[.56,.46,.28],[0,.02,.09]);qkPiece(playerRig.uaL,QKA.mShL,t,[.22,.15,.22],[-.02,.06,.01]);qkPiece(playerRig.uaR,QKA.mShR,t,[.22,.15,.22],[.02,.06,.01]);}}if(qkIsT5(g)){{const m=mageMat(g,false);qkPiece(playerRig.laL,QKA.mArmL,m,[.15,.28,.17],[0,.09,.02]);qkPiece(playerRig.laR,QKA.mArmR,m,[.15,.28,.17],[0,.09,.02]);}}if(qkIsT5(b)){{const m=mageMat(b,false),t=mageMat(b,true);qkPiece(playerRig.llL,QKA.mLegL,m,[.17,.31,.18],[0,.10,.01]);qkPiece(playerRig.llR,QKA.mLegR,m,[.17,.31,.18],[0,.10,.01]);qkPiece(playerRig.footL,QKA.mFootL,t,[.18,.13,.27],[0,.03,.07]);qkPiece(playerRig.footR,QKA.mFootR,t,[.18,.13,.27],[0,.03,.07]);}}}}
+function qkElfArmor(){{if(P.cls!=='elfa')return;const a=P.eq.armadura,g=P.eq.guantes,b=P.eq.botas;if(qkIsT5(a)){{const m=elfMat(a,false),t=elfMat(a,true);qkPiece(playerRig.chest,QKA.eChest,m,[.52,.43,.26],[0,.02,.09]);qkPiece(playerRig.chest,QKA.eCloak,t,[.46,.55,.12],[0,.02,-.09]);}}if(qkIsT5(g)){{const m=elfMat(g,true);qkPiece(playerRig.laL,QKA.eArmL,m,[.15,.27,.16],[0,.09,.02]);qkPiece(playerRig.laR,QKA.eArmR,m,[.15,.27,.16],[0,.09,.02]);}}if(qkIsT5(b)){{const m=elfMat(b,false),t=elfMat(b,true);qkPiece(playerRig.llL,QKA.eLegL,m,[.17,.31,.18],[0,.10,.01]);qkPiece(playerRig.llR,QKA.eLegR,m,[.17,.31,.18],[0,.10,.01]);qkPiece(playerRig.footL,QKA.eFootL,t,[.18,.13,.27],[0,.03,.07]);qkPiece(playerRig.footR,QKA.eFootR,t,[.18,.13,.27],[0,.03,.07]);}}}}
+function qkArmorOnly(){{qkWarriorArmor();qkMageArmor();qkElfArmor();}}
+'''
+anchor='function gearVisuals(){'
+if anchor not in s: raise SystemExit('No se encontro gearVisuals')
+s=s.replace(anchor,helpers+'\n'+anchor,1)
+old='}return;}\n  const w=P.eq.arma,a=P.eq.armadura'
+new='}qkArmorOnly();return;}\n  const w=P.eq.arma,a=P.eq.armadura'
+if old not in s: raise SystemExit('No se encontro cierre de rama GLB')
 s=s.replace(old,new,1)
-
-old2="""function gearVisuals(){
-  if(!playerRig)return;
-  if(playerRig.type==='glb'){const w=P.eq.arma;"""
-new2="""function gearVisuals(){
-  if(!playerRig)return;
-  const wantQ=qkT5Active();
-  if(!!playerRig.qk!==wantQ){buildPlayerModel();return;}
-  if(playerRig.qk){qkGearVisuals();return;}
-  if(qkCandidate()&&!qkReady(P.cls))qkRequestIfNeeded();
-  if(playerRig.type==='glb'){const w=P.eq.arma;"""
-if old2 not in s:
-    raise SystemExit("No se encontro gearVisuals esperado")
-s=s.replace(old2,new2,1)
-
 p.write_text(s)
-print("Quaternius T5 aplicado para Guerrero, Mago y Elfo con carga bajo demanda")
+print('Quaternius T5: armaduras reales, personaje original sin reemplazo')
