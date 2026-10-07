@@ -63,6 +63,9 @@ jobs:
       - name: Aplicar cinco tiers del Elfo
         run: python3 .github/scripts/elf_armor_patch.py
 
+      - name: Aplicar Barbaro Asesino y Brujo
+        run: python3 .github/scripts/remaining_armor_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
