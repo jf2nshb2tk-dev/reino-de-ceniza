@@ -54,6 +54,9 @@ jobs:
       - name: Neutralizar traje base del Guerrero
         run: python3 .github/scripts/warrior_base_skin_patch.py
 
+      - name: Corregir casco del Guerrero
+        run: python3 .github/scripts/warrior_helmet_fix_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
