@@ -28,19 +28,18 @@ jobs:
         shell: bash
         run: |
           mkdir -p assets/quaternius
-          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=15eAmpUglpZc5qjlDRThb3cvqmPvvihPD&export=download&confirm=t" -o assets/quaternius/Warrior.obj
-          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=1QJt-p0iRezGKUQlMQP_mnYlnnK_KfRDt&export=download&confirm=t" -o assets/quaternius/Wizard.obj
-          curl --retry 3 --retry-delay 2 -fL "https://drive.usercontent.google.com/download?id=12vOwOHcZwxxV7l2KK-HUdLefL-MRiqHf&export=download&confirm=t" -o assets/quaternius/Ranger.obj
+          python3 -m pip install --quiet gdown
+          gdown 15eAmpUglpZc5qjlDRThb3cvqmPvvihPD -O assets/quaternius/Warrior.obj
+          gdown 1QJt-p0iRezGKUQlMQP_mnYlnnK_KfRDt -O assets/quaternius/Wizard.obj
+          gdown 12vOwOHcZwxxV7l2KK-HUdLefL-MRiqHf -O assets/quaternius/Ranger.obj
           python3 - <<'PY'
           from pathlib import Path
           expected={'Warrior.obj':459385,'Wizard.obj':463856,'Ranger.obj':312961}
           for name,size in expected.items():
               p=Path('assets/quaternius')/name
-              if p.stat().st_size!=size or not p.read_text(errors='ignore').lstrip().startswith('#'):
-                  # Blender OBJ a veces empieza con mtllib/o; validamos además que tenga vértices y objetos.
-                  t=p.read_text(errors='ignore')
-                  if p.stat().st_size!=size or '\nv ' not in '\n'+t or '\no ' not in '\n'+t:
-                      raise SystemExit(f'OBJ Quaternius invalido: {name} ({p.stat().st_size})')
+              t=p.read_text(errors='ignore')
+              if p.stat().st_size!=size or '\nv ' not in '\n'+t or '\no ' not in '\n'+t:
+                  raise SystemExit(f'OBJ Quaternius invalido: {name} ({p.stat().st_size})')
               print(name,p.stat().st_size)
           PY
 
