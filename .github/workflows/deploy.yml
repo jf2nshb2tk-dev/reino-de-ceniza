@@ -88,6 +88,9 @@ jobs:
       - name: Aplicar modelos Quaternius T5
         run: python3 .github/scripts/quaternius_t5_patch.py
 
+      - name: Corregir animaciones y texturas Quaternius
+        run: python3 .github/scripts/quaternius_t5_fix_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
