@@ -29,9 +29,9 @@ jobs:
         run: |
           mkdir -p assets/quaternius
           python3 -m pip install -q gdown
-          gdown --id 1oALqyqy7yVQnLh-Vs19kKg3eZgJqIgoc -O assets/quaternius/Warrior.gltf
-          gdown --id 1OfEos4LtQLrMfJLpw2OdBNhbu36RtZUd -O assets/quaternius/Wizard.gltf
-          gdown --id 1e3eAO6oHYVyDNdhoNogNii5CtLQB7pLc -O assets/quaternius/Ranger.gltf
+          gdown 1oALqyqy7yVQnLh-Vs19kKg3eZgJqIgoc -O assets/quaternius/Warrior.gltf
+          gdown 1OfEos4LtQLrMfJLpw2OdBNhbu36RtZUd -O assets/quaternius/Wizard.gltf
+          gdown 1e3eAO6oHYVyDNdhoNogNii5CtLQB7pLc -O assets/quaternius/Ranger.gltf
           python3 - <<'PY'
           from pathlib import Path
           for name in ('Warrior','Wizard','Ranger'):
