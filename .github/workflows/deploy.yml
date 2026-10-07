@@ -60,6 +60,9 @@ jobs:
       - name: Aplicar cinco tiers del Mago
         run: python3 .github/scripts/mage_armor_patch.py
 
+      - name: Aplicar cinco tiers del Elfo
+        run: python3 .github/scripts/elf_armor_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
