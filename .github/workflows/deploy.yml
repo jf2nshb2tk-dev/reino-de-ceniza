@@ -112,6 +112,9 @@ jobs:
           python3 .github/scripts/all_tiers_real_armor_patch.py
           rm -rf assets/quaternius
 
+      - name: Aplicar brillo visible por mejora
+        run: python3 .github/scripts/upgrade_glow_patch.py
+
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
 
