@@ -32,13 +32,22 @@ jobs:
           curl --retry 3 --retry-delay 2 -fL "$BASE/Warrior.gltf" -o assets/quaternius/Warrior.gltf
           curl --retry 3 --retry-delay 2 -fL "$BASE/Wizard.gltf" -o assets/quaternius/Wizard.gltf
           curl --retry 3 --retry-delay 2 -fL "$BASE/Ranger.gltf" -o assets/quaternius/Ranger.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Monk.gltf" -o assets/quaternius/Monk.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Rogue.gltf" -o assets/quaternius/Rogue.gltf
+          curl --retry 3 --retry-delay 2 -fL "$BASE/Cleric.gltf" -o assets/quaternius/Cleric.gltf
           python3 - <<'PY'
           from pathlib import Path
-          expected={'Warrior.gltf':3035392,'Wizard.gltf':3296909,'Ranger.gltf':2987934}
-          for name,size in expected.items():
+          exact={'Warrior.gltf':3035392,'Wizard.gltf':3296909,'Ranger.gltf':2987934}
+          for name,size in exact.items():
               p=Path('assets/quaternius')/name
               t=p.read_text(errors='strict')
               if p.stat().st_size!=size or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
+                  raise SystemExit(f'Modelo Quaternius invalido: {name} ({p.stat().st_size})')
+              print(name,p.stat().st_size)
+          for name in ['Monk.gltf','Rogue.gltf','Cleric.gltf']:
+              p=Path('assets/quaternius')/name
+              t=p.read_text(errors='strict')
+              if p.stat().st_size<2000000 or not t.lstrip().startswith('{') or '"asset"' not in t[:3000]:
                   raise SystemExit(f'Modelo Quaternius invalido: {name} ({p.stat().st_size})')
               print(name,p.stat().st_size)
           PY
@@ -92,9 +101,12 @@ jobs:
         run: python3 .github/scripts/quaternius_t5_replace_patch.py
 
       - name: Diferenciar set final del Elfo
+        run: python3 .github/scripts/elf_t5_final_patch.py
+
+      - name: Completar sets finales de las otras clases
         shell: bash
         run: |
-          python3 .github/scripts/elf_t5_final_patch.py
+          python3 .github/scripts/remaining_t5_final_patch.py
           rm -rf assets/quaternius
 
       - name: Mantener visibles acciones del inventario
