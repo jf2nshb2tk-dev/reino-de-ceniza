@@ -86,13 +86,16 @@ jobs:
         run: python3 .github/scripts/remaining_armor_patch.py
 
       - name: Aplicar piezas Quaternius como armaduras T5
-        shell: bash
-        run: |
-          python3 .github/scripts/quaternius_t5_patch.py
-          rm -rf assets/quaternius
+        run: python3 .github/scripts/quaternius_t5_patch.py
 
       - name: Reemplazar armadura procedural T5
         run: python3 .github/scripts/quaternius_t5_replace_patch.py
+
+      - name: Diferenciar set final del Elfo
+        shell: bash
+        run: |
+          python3 .github/scripts/elf_t5_final_patch.py
+          rm -rf assets/quaternius
 
       - name: Mantener visibles acciones del inventario
         run: python3 .github/scripts/inventory_detail_fix_patch.py
