@@ -104,9 +104,12 @@ jobs:
         run: python3 .github/scripts/elf_t5_final_patch.py
 
       - name: Completar sets finales de las otras clases
+        run: python3 .github/scripts/remaining_t5_final_patch.py
+
+      - name: Aplicar armaduras reales T1 a T4
         shell: bash
         run: |
-          python3 .github/scripts/remaining_t5_final_patch.py
+          python3 .github/scripts/all_tiers_real_armor_patch.py
           rm -rf assets/quaternius
 
       - name: Mantener visibles acciones del inventario
